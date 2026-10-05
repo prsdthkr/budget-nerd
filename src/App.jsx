@@ -10,8 +10,14 @@ export default function App() {
   const [credentials, setCredentials] = useState(blank)
   const [busy, setBusy] = useState(false)
   const [protectedBusy, setProtectedBusy] = useState(false)
+  const [activeView, setActiveView] = useState('dashboard')
   const [notice, setNotice] = useState(null)
   const [result, setResult] = useState(null)
+  const [cards, setCards] = useState([])
+  const [cardsLoading, setCardsLoading] = useState(false)
+  const [cardName, setCardName] = useState('')
+  const [cardBusy, setCardBusy] = useState(false)
+  const [cardActionId, setCardActionId] = useState(null)
 
   useEffect(() => {
     let mounted = true
@@ -29,6 +35,23 @@ export default function App() {
     })
     return () => { mounted = false; data.subscription.unsubscribe() }
   }, [])
+
+  useEffect(() => {
+    if (session) loadCards()
+    else setCards([])
+  }, [session])
+
+  const loadCards = async () => {
+    setCardsLoading(true)
+    const response = await supabase
+      .from('credit_cards')
+      .select('id, name, sort_order, created_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
+    setCardsLoading(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setCards(response.data || [])
+  }
 
   const changeCredentials = ({ target }) => setCredentials((current) => ({ ...current, [target.name]: target.value }))
 
@@ -72,6 +95,59 @@ export default function App() {
     setNotice({ type: 'success', text: 'Authenticated query and insert succeeded. RLS allowed this user.' })
   }
 
+  const addCard = async (event) => {
+    event.preventDefault()
+    const name = cardName.trim()
+    if (!name) return
+    setCardBusy(true)
+    setNotice(null)
+    const nextOrder = cards.length ? Math.max(...cards.map((card) => card.sort_order)) + 1 : 0
+    const response = await supabase
+      .from('credit_cards')
+      .insert({ name, sort_order: nextOrder })
+      .select('id, name, sort_order, created_at')
+      .single()
+    setCardBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setCards((current) => [...current, response.data])
+    setCardName('')
+    setNotice({ type: 'success', text: 'Credit card added.' })
+  }
+
+  const deleteCard = async (card) => {
+    if (!window.confirm('Delete ' + card.name + '? This cannot be undone.')) return
+    setCardActionId(card.id)
+    setNotice(null)
+    const response = await supabase.from('credit_cards').delete().eq('id', card.id)
+    setCardActionId(null)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setCards((current) => current.filter((item) => item.id !== card.id))
+    setNotice({ type: 'success', text: 'Credit card deleted.' })
+  }
+
+  const moveCard = async (cardId, direction) => {
+    const currentIndex = cards.findIndex((card) => card.id === cardId)
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= cards.length) return
+    const reordered = [...cards]
+    const currentCard = reordered[currentIndex]
+    reordered[currentIndex] = reordered[targetIndex]
+    reordered[targetIndex] = currentCard
+    setCardActionId(cardId)
+    setNotice(null)
+    const updates = await Promise.all(reordered.map((card, index) =>
+      supabase.from('credit_cards').update({ sort_order: index }).eq('id', card.id),
+    ))
+    setCardActionId(null)
+    const failed = updates.find((response) => response.error)
+    if (failed) {
+      setNotice({ type: 'error', text: failed.error.message })
+      await loadCards()
+      return
+    }
+    setCards(reordered.map((card, index) => ({ ...card, sort_order: index })))
+  }
+
   if (loading) return <main className="page-shell"><p className="loading">Loading...</p></main>
 
   if (!session) return (
@@ -94,14 +170,43 @@ export default function App() {
     </section></main>
   )
 
-  return <main className="page-shell"><section className="card dashboard-card">
-    <div className="dashboard-header"><div><p className="eyebrow">Private dashboard</p><h1>Hello World</h1></div><button className="secondary-button" onClick={signOut}>Sign out</button></div>
+  return <main className="app-shell">
+    <Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} email={session.user.email} signOut={signOut} />
+    <section className="content-shell">
+      {activeView === 'cards'
+        ? <CardsView cards={cards} cardsLoading={cardsLoading} cardName={cardName} setCardName={setCardName} cardBusy={cardBusy} cardActionId={cardActionId} addCard={addCard} deleteCard={deleteCard} moveCard={moveCard} />
+        : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+      {notice && <Notice notice={notice} />}
+    </section>
+  </main>
+}
+
+function Sidebar({ activeView, setActiveView, cardsCount, email, signOut }) {
+  return <aside className="sidebar">
+    <div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div>
+    <nav className="side-nav" aria-label="Main navigation">
+      <button className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</button>
+      <button className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</button>
+    </nav>
+    <div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><button className="nav-signout" onClick={signOut}>Sign out</button></div>
+  </aside>
+}
+
+function DashboardView({ session, protectedCheck, protectedBusy, result }) {
+  return <div className="view-stack">
+    <div className="page-heading"><div><p className="eyebrow">Private dashboard</p><h1>Hello World</h1><p className="muted">Your personal finance workspace starts here.</p></div></div>
     <div className="welcome-panel"><span className="status-dot" /><div><p className="muted">Signed in as</p><strong>{session.user.email}</strong></div></div>
-    <div className="divider" />
-    <div className="protected-panel"><div><p className="eyebrow">Protected data check</p><h2>Test authenticated Supabase access</h2><p className="muted">Reads your profile and inserts a user-owned ping through Row Level Security.</p></div><button className="primary-button" onClick={protectedCheck} disabled={protectedBusy}>{protectedBusy ? 'Checking...' : 'Run protected check'}</button></div>
+    <section className="content-card protected-panel"><div><p className="eyebrow">Protected data check</p><h2>Test authenticated Supabase access</h2><p className="muted">Reads your profile and inserts a user-owned ping through Row Level Security.</p></div><button className="primary-button" onClick={protectedCheck} disabled={protectedBusy}>{protectedBusy ? 'Checking...' : 'Run protected check'}</button></section>
     {result && <pre className="result-box">{JSON.stringify(result, null, 2)}</pre>}
-    {notice && <Notice notice={notice} />}
-  </section></main>
+  </div>
+}
+
+function CardsView({ cards, cardsLoading, cardName, setCardName, cardBusy, cardActionId, addCard, deleteCard, moveCard }) {
+  return <div className="view-stack">
+    <div className="page-heading"><div><p className="eyebrow">Your wallet</p><h1>Credit cards</h1><p className="muted">Keep your cards organized. You can add account details and transactions later.</p></div></div>
+    <section className="content-card add-card-panel"><form className="add-card-form" onSubmit={addCard}><div><label htmlFor="card-name">Card name</label><input id="card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} placeholder="e.g. Everyday Rewards" maxLength={80} required /></div><button className="primary-button" disabled={cardBusy}>{cardBusy ? 'Adding...' : 'Add card'}</button></form></section>
+    {cardsLoading ? <p className="loading">Loading your cards...</p> : cards.length === 0 ? <section className="empty-state"><div className="empty-icon">▣</div><h2>No cards yet</h2><p className="muted">Add your first card above. Only its name is stored for now.</p></section> : <div className="cards-grid">{cards.map((card, index) => <article className="credit-card" key={card.id}><div className="card-chip" /><div className="card-label">Credit card</div><h2>{card.name}</h2><div className="card-placeholder">••••  ••••  ••••  ••••</div><div className="card-actions"><button title="Move card up" aria-label="Move card up" disabled={index === 0 || cardActionId === card.id} onClick={() => moveCard(card.id, 'up')}>↑</button><button title="Move card down" aria-label="Move card down" disabled={index === cards.length - 1 || cardActionId === card.id} onClick={() => moveCard(card.id, 'down')}>↓</button><button className="delete-card-button" title="Delete card" aria-label={'Delete ' + card.name} disabled={cardActionId === card.id} onClick={() => deleteCard(card)}>Delete</button></div></article>)}</div>}
+  </div>
 }
 
 function Notice({ notice }) { return <p className={'notice ' + notice.type} role="status">{notice.text}</p> }
