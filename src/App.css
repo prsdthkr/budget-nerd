@@ -18,3 +18,5 @@
 
 .react-datepicker-popper{z-index:1100!important;pointer-events:auto}
 .react-datepicker{font-family:inherit}
+
+.statement-day-field{min-width:0}.statement-day-field .form-label{display:block;margin:0 0 .5rem;color:#34405a;font-size:.9rem;font-weight:650}
