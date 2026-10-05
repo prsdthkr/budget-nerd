@@ -46,6 +46,9 @@ create table if not exists public.account_ledger_items (
   realized_amount numeric(12, 2) not null default 0,
   planned_amount numeric(12, 2) not null default 0,
   recurring boolean not null default false,
+  source_type text not null default 'manual' check (source_type in ('manual', 'card_payment')),
+  card_id uuid references public.credit_cards(id) on delete cascade,
+  statement_month date,
   recurrence_id uuid not null default gen_random_uuid(),
   created_at timestamptz not null default now(),
   unique (account_id, recurrence_id, ledger_date)
@@ -54,6 +57,7 @@ create table if not exists public.account_ledger_items (
 create index if not exists bank_accounts_user_idx on public.bank_accounts (user_id);
 create index if not exists account_ledger_user_date_idx on public.account_ledger_items (user_id, ledger_date desc);
 create index if not exists account_ledger_account_date_idx on public.account_ledger_items (account_id, ledger_date desc);
+create unique index if not exists account_ledger_card_payment_unique_idx on public.account_ledger_items (card_id, statement_month) where source_type = 'card_payment';
 
 create table if not exists public.category_limits (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
