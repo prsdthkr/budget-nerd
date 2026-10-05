@@ -15,3 +15,6 @@
 .transaction-form .rbt,.transaction-form .react-datepicker-wrapper{display:block;width:100%}
 .transaction-form .rbt-input-main,.transaction-form .react-datepicker-wrapper .form-control{width:100%}
 .transaction-form>.btn{width:100%;margin-top:.8rem}
+
+.react-datepicker-popper{z-index:1100!important;pointer-events:auto}
+.react-datepicker{font-family:inherit}
