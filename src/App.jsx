@@ -361,10 +361,10 @@ function orderCardsByStatementDate(cards) {
 }
 
 function statementSummary(card, transactions) {
-  const now = new Date()
-  const periods = statementPeriods(card.statement_day, now)
-  const totalBetween = (start, end) => transactions.filter((transaction) => transaction.card_id === card.id).filter((transaction) => { const date = parseDate(transaction.transaction_date); return date >= start && date < end }).reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
-  return { currentDate: periods.currentDate, currentTotal: totalBetween(periods.currentStart, periods.currentEnd), nextDate: periods.nextDate, nextTotal: totalBetween(periods.nextStart, periods.nextEnd) }
+  const periods = statementPeriods(card.statement_day, new Date())
+  const monthKey = (date) => date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0')
+  const totalForStatementMonth = (date) => transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === monthKey(date)).reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+  return { currentDate: periods.currentDate, currentTotal: totalForStatementMonth(periods.currentDate), nextDate: periods.nextDate, nextTotal: totalForStatementMonth(periods.nextDate) }
 }
 
 function statementPeriods(statementDay, now) {
