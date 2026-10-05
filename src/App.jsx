@@ -508,6 +508,19 @@ export default function App() {
     setNotice({ type: 'success', text: 'Transaction deleted.' })
   }
 
+  const planCardPayment = async ({ cardId, cardName, statementMonth, accountId, amount }) => {
+    if (!accountId) return setNotice({ type: 'error', text: 'Choose a bank account for this planned card payment.' })
+    setPaymentBusy(true)
+    setNotice(null)
+    const existing = bankLedger.find((item) => item.source_type === 'card_payment' && item.card_id === cardId && item.statement_month?.slice(0, 7) === statementMonth)
+    const values = { account_id: accountId, description: cardName + ' payment - ' + formatMonth(statementMonth + '-01'), ledger_date: statementMonth + '-01', realized_amount: 0, planned_amount: -Number(amount || 0), recurring: false, source_type: 'card_payment', card_id: cardId, statement_month: statementMonth + '-01' }
+    const response = existing ? await supabase.from('account_ledger_items').update(values).eq('id', existing.id).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
+    setPaymentBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setBankLedger((current) => existing ? current.map((item) => item.id === response.data.id ? response.data : item) : [response.data, ...current])
+    setNotice({ type: 'success', text: 'Planned card payment saved.' })
+  }
+
   const selectedAccount = bankAccounts.find((account) => account.id === selectedAccountId) || null
 
   const navigateTo = (view) => {
