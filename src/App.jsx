@@ -5,7 +5,7 @@ const blank = { email: '', password: '' }
 const defaultTransaction = () => ({ type: 'grocery', name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth: new Date().toISOString().slice(0, 7) })
 
 const CARD_COLORS = [
-  { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Teal', value: '#0f766e' },
+  { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Teal', value: '#0f766e' },
   { name: 'Emerald', value: '#059669' }, { name: 'Lime', value: '#65a30d' }, { name: 'Amber', value: '#d97706' },
   { name: 'Orange', value: '#ea580c' }, { name: 'Rose', value: '#e11d48' }, { name: 'Pink', value: '#db2777' },
   { name: 'Violet', value: '#7c3aed' }, { name: 'Indigo', value: '#4f46e5' }, { name: 'Slate', value: '#475569' },
