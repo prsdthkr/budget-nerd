@@ -121,3 +121,5 @@
 .ledger-swap-button{width:100%;margin-bottom:1rem}
 
 .ledger-date-groups{display:grid;gap:1rem}.ledger-date-group h4{margin:0;padding:.2rem .15rem;color:#647089;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.ledger-date-group .transaction-list{gap:.4rem}.ledger-row{border-left:4px solid #d6ddea}.ledger-row.planned{border-left-color:#3958d5;background:#eef1ff}.ledger-row.realized{border-left-color:#2bb673;background:#e9f8f0}.ledger-row.mixed{border-left-color:#d97706;background:#fff7e6}.ledger-row.planned .ledger-amounts{color:#3958d5}.ledger-row.realized .ledger-amounts{color:#176a49}.ledger-row.mixed .ledger-amounts{color:#a85b00}
+
+.ledger-balance-after{margin-top:.15rem;color:#172033;font-weight:750}
