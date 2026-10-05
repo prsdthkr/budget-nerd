@@ -280,12 +280,14 @@ export default function App() {
   const saveTransaction = async (event) => {
     event.preventDefault()
     if (!editingTransaction) return
-    const name = editTransactionForm.name.trim()
-    const amount = Number.parseFloat(editTransactionForm.amount)
-    if (!name || !editTransactionForm.date || !editTransactionForm.statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
+    const name = String(editTransactionForm.name || '').trim()
+    const date = editTransactionForm.date || formatIsoDate(new Date())
+    const statementMonth = editTransactionForm.statementMonth || formatIsoMonth(new Date())
+    const amount = Number(String(editTransactionForm.amount ?? '').replace(/[$,]/g, '').trim())
+    if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     setEditBusy(true)
     setNotice(null)
-    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, transaction_date: editTransactionForm.date, amount, statement_month: editTransactionForm.statementMonth + '-01' }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').single()
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, transaction_date: date, amount, statement_month: statementMonth + '-01' }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').single()
     setEditBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
