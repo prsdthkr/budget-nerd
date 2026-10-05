@@ -105,7 +105,7 @@ export default function App() {
     const response = await supabase.from('credit_cards').select('id, name, color, default_category, statement_day, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
     setCardsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
-    setCards(response.data || [])
+    setCards(orderCardsByStatementDate(response.data || []))
   }
 
   const loadTransactions = async (cardId) => {
@@ -178,7 +178,7 @@ export default function App() {
     const response = await supabase.from('credit_cards').insert({ name, color: cardColor, default_category: cardDefaultCategory, statement_day: statementDay, sort_order: nextOrder }).select('id, name, color, default_category, statement_day, sort_order, created_at').single()
     setCardBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
-    setCards((current) => [...current, response.data])
+    setCards((current) => orderCardsByStatementDate([...current, response.data]))
     setCardName('')
     setCardColor(CARD_COLORS[0].value)
     setCardDefaultCategory('misc')
@@ -209,7 +209,7 @@ export default function App() {
     const response = await supabase.from('credit_cards').update({ color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay }).eq('id', selectedCard.id)
     setColorBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
-    setCards((current) => current.map((card) => card.id === selectedCard.id ? { ...card, color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay } : card))
+    setCards((current) => orderCardsByStatementDate(current.map((card) => card.id === selectedCard.id ? { ...card, color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay } : card)))
     setNotice({ type: 'success', text: 'Card preferences updated.' })
   }
 
@@ -343,6 +343,16 @@ function CardsView({ cards, allTransactions, cardsLoading, cardName, setCardName
 function CreditCardView({ card, statementSummary, openCard }) {
   const clickCard = () => openCard(card)
   return <Card className="credit-card" style={{ '--card-color': card.color || CARD_COLORS[0].value }} onClick={clickCard} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') clickCard() }} role="button" tabIndex="0"><Card.Body><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
+}
+
+function orderCardsByStatementDate(cards) {
+  const now = new Date()
+  return [...cards].sort((left, right) => {
+    if (!left.statement_day && !right.statement_day) return (left.sort_order || 0) - (right.sort_order || 0)
+    if (!left.statement_day) return 1
+    if (!right.statement_day) return -1
+    return statementPeriods(left.statement_day, now).currentDate - statementPeriods(right.statement_day, now).currentDate
+  })
 }
 
 function statementSummary(card, transactions) {
