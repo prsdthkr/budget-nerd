@@ -51,3 +51,8 @@
 
 .transaction-modal-dialog{width:calc(100vw - 2rem);max-width:1400px}
 @media(max-width:760px){.transaction-modal-dialog{width:100%;max-width:100%}}
+
+/* Give the transaction history the largest column and override Bootstrap's modal-xl cap. */
+.modal-dialog.transaction-modal-dialog{width:98vw!important;max-width:1800px!important}.transaction-workspace{grid-template-columns:minmax(200px,.75fr) minmax(290px,.85fr) minmax(390px,1.4fr)}
+@media(max-width:1050px){.transaction-workspace{grid-template-columns:minmax(200px,.8fr) minmax(320px,1.2fr)}}
+@media(max-width:760px){.modal-dialog.transaction-modal-dialog{width:100%!important;max-width:100%!important}.transaction-workspace{grid-template-columns:1fr}}
