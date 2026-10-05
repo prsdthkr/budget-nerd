@@ -465,6 +465,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
     setAllTransactions((current) => [response.data, ...current])
+    await loadBankData()
     setTransactionForm(defaultTransaction(selectedCard.default_category || 'misc', selectedCard.default_statement_month ? selectedCard.default_statement_month.slice(0, 7) : formatIsoMonth(statementPeriods(selectedCard.statement_day, new Date()).currentDate)))
     setNotice({ type: 'success', text: 'Transaction added to ' + selectedCard.name + '.' })
   }
@@ -492,6 +493,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
     setTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
+    await loadBankData()
     setEditingTransaction(null)
     await loadActivityTransactions()
     setNotice({ type: 'success', text: 'Transaction updated.' })
@@ -503,6 +505,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.filter((item) => item.id !== transaction.id))
     setTransactions((current) => current.filter((item) => item.id !== transaction.id))
+    await loadBankData()
     if (editingTransaction?.id === transaction.id) setEditingTransaction(null)
     await loadActivityTransactions()
     setNotice({ type: 'success', text: 'Transaction deleted.' })
