@@ -1,51 +1,53 @@
 # Budget Nerd
 
-A production-ready React + Vite starter with Supabase email/password authentication, Row Level Security, and Vercel deployment support.
+A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, and Vercel deployment support.
 
-## 1. Local project setup
+## Local setup
 
 Requirements: Node.js 20+, npm, and the GitHub CLI.
-
-For a new local Vite project, the requested scaffold command is:
-
-    npm create vite@latest my-budget-app -- --template react
-    cd my-budget-app
-    npm install
-    npm install @supabase/supabase-js
-
-For this existing repository, clone it instead:
 
     git clone https://github.com/prsdthkr/budget-nerd.git
     cd budget-nerd
     npm install
     cp .env.example .env
-
-Edit .env with the values from Supabase Dashboard -> Project Settings -> API:
-
-- VITE_SUPABASE_URL: the Project URL.
-- VITE_SUPABASE_ANON_KEY: the anon key, or the publishable key if your project uses the newer key format.
-
-Run the app with:
-
     npm run dev
 
-Build for production with:
+Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env using the values from Supabase Dashboard -> Project Settings -> API. The publishable key can be used as VITE_SUPABASE_ANON_KEY. Never use the service-role or secret key in this app.
+
+Build with:
 
     npm run build
 
-## 2. Supabase setup
+## Supabase setup
 
-1. Create or open a Supabase project.
-2. Open SQL Editor and run supabase/schema.sql.
-3. Open Authentication -> Providers and enable Email.
-4. For local email confirmation redirects, add http://localhost:5173 to Authentication -> URL Configuration.
-5. After deploying, add the Vercel URL there as well.
+For a new project, run supabase/schema.sql in Supabase Dashboard -> SQL Editor. For an existing project that already has the profiles and pings tables, run supabase/migrations/20261005_credit_cards.sql instead.
 
-The app supports email/password sign-up, sign-in, and sign-out. The dashboard's protected check selects the signed-in user's profile and inserts a user-owned ping. Both operations are protected by RLS.
+The migration creates public.credit_cards with:
 
-## 3. GitHub CLI
+- id: generated UUID
+- user_id: authenticated owner
+- name: the only card detail currently entered by the user
+- sort_order: persistent UI ordering
+- created_at: creation timestamp
 
-To create a new private repository and push a local project:
+RLS restricts select, insert, update, and delete operations to the authenticated owner. The app never stores card numbers, CVVs, expiration dates, or other sensitive payment data.
+
+In Authentication -> URL Configuration, add http://localhost:5173 and your Vercel URL as allowed redirect URLs.
+
+## Credit cards workspace
+
+The authenticated app has a side navigation with Dashboard and Cards sections. Cards supports:
+
+- Adding a card by name
+- Viewing cards in a responsive visual grid
+- Deleting a card
+- Moving cards up and down to persist their order
+
+The credit_cards model is intentionally small so future fields and features such as transactions, limits, rewards, and statements can be added without storing payment credentials.
+
+## GitHub CLI
+
+For a new private repository:
 
     gh auth login
     git init
@@ -53,23 +55,13 @@ To create a new private repository and push a local project:
     git commit -m "Initial React Supabase starter"
     gh repo create my-budget-app --private --source=. --remote=origin --push
 
-This repository already exists at https://github.com/prsdthkr/budget-nerd. To push local work to it, use:
+This repository already exists at https://github.com/prsdthkr/budget-nerd.
 
-    git remote add origin https://github.com/prsdthkr/budget-nerd.git
-    git branch -M main
-    git push -u origin main
+## Vercel deployment
 
-## 4. Vercel deployment
-
-1. Open https://vercel.com and sign in with GitHub.
-2. Choose Add New -> Project.
-3. Import prsdthkr/budget-nerd.
-4. Keep the Vite defaults: build command npm run build and output directory dist.
-5. Open Project Settings -> Environment Variables.
-6. Add VITE_SUPABASE_URL with the Supabase Project URL.
-7. Add VITE_SUPABASE_ANON_KEY with the Supabase anon or publishable key.
-8. Enable both variables for Production, Preview, and Development, then save.
-9. Deploy or redeploy the project so the build receives the variables.
-10. In Supabase Authentication -> URL Configuration, set the Vercel production URL as Site URL and add the production and preview URLs as redirect URLs.
-
-The browser-facing anon/publishable key is not a database secret. RLS policies are required for security. Never put the Supabase service-role key in Vite environment variables or client code.
+1. Import prsdthkr/budget-nerd in Vercel.
+2. Use build command npm run build and output directory dist.
+3. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY under Project Settings -> Environment Variables.
+4. Enable both variables for Production, Preview, and Development.
+5. Redeploy after saving variables.
+6. Add the Vercel production and preview URLs to Supabase Authentication -> URL Configuration.
