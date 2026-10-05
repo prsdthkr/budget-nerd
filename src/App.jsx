@@ -37,6 +37,7 @@ const TRANSACTION_TYPES = [
 
 
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
+const blankActivityFilters = { name: '', amount: '', date: '', statementMonth: '', cardId: '', category: '' }
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -73,6 +74,9 @@ export default function App() {
   const [colorBusy, setColorBusy] = useState(false)
   const [allTransactions, setAllTransactions] = useState([])
   const [allTransactionsLoading, setAllTransactionsLoading] = useState(false)
+  const [activityTransactions, setActivityTransactions] = useState([])
+  const [activityLoading, setActivityLoading] = useState(false)
+  const [activityFilters, setActivityFilters] = useState(blankActivityFilters)
   const [categoryLimits, setCategoryLimits] = useState({})
   const [spendMonth, setSpendMonth] = useState(() => formatIsoMonth(new Date()))
   const [limitsLoading, setLimitsLoading] = useState(false)
@@ -111,6 +115,7 @@ export default function App() {
     } else {
       setCards([])
       setAllTransactions([])
+      setActivityTransactions([])
       setCategoryLimits({})
     }
   }, [session])
@@ -142,6 +147,24 @@ export default function App() {
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
+  }
+
+  const loadActivityTransactions = async (filters = activityFilters) => {
+    setActivityLoading(true)
+    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(10)
+    if (filters.name.trim()) query = query.ilike('name', '%' + filters.name.trim() + '%')
+    if (filters.amount !== '') {
+      const amount = Number(filters.amount)
+      if (Number.isFinite(amount)) query = query.eq('amount', amount)
+    }
+    if (filters.date) query = query.eq('transaction_date', filters.date)
+    if (filters.statementMonth) query = query.eq('statement_month', filters.statementMonth + '-01')
+    if (filters.cardId) query = query.eq('card_id', filters.cardId)
+    if (filters.category) query = query.eq('type', filters.category)
+    const response = await query
+    setActivityLoading(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setActivityTransactions(response.data || [])
   }
 
   const loadCategoryLimits = async () => {
@@ -366,6 +389,7 @@ export default function App() {
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
     setTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
     setEditingTransaction(null)
+    await loadActivityTransactions()
     setNotice({ type: 'success', text: 'Transaction updated.' })
   }
 
@@ -376,7 +400,13 @@ export default function App() {
     setAllTransactions((current) => current.filter((item) => item.id !== transaction.id))
     setTransactions((current) => current.filter((item) => item.id !== transaction.id))
     if (editingTransaction?.id === transaction.id) setEditingTransaction(null)
+    await loadActivityTransactions()
     setNotice({ type: 'success', text: 'Transaction deleted.' })
+  }
+
+  const navigateTo = (view) => {
+    setActiveView(view)
+    if (view === 'transactions') loadActivityTransactions()
   }
 
   if (loading) return <main className="page-shell"><p className="loading">Loading...</p></main>
@@ -387,8 +417,8 @@ export default function App() {
     <Button className="link-button" type="button" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setNotice(null) }}>{mode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up'}</Button>{notice && <Notice notice={notice} />}
   </section></main>
 
-  return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
-    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : activeView === 'spend' ? <SpendView transactions={allTransactions} limits={categoryLimits} month={spendMonth} setMonth={setSpendMonth} loading={allTransactionsLoading || limitsLoading} openLimits={() => setLimitsOpen(true)} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+  return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={navigateTo} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
+    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={activityTransactions} cards={cards} loading={activityLoading} filters={activityFilters} setFilters={setActivityFilters} onSearch={() => loadActivityTransactions()} /> : activeView === 'spend' ? <SpendView transactions={allTransactions} limits={categoryLimits} month={spendMonth} setMonth={setSpendMonth} loading={allTransactionsLoading || limitsLoading} openLimits={() => setLimitsOpen(true)} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
   </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{limitsOpen && <SpendLimitsModal limits={categoryLimits} setLimits={setCategoryLimits} save={saveCategoryLimits} busy={limitsBusy} close={() => setLimitsOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
