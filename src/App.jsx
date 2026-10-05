@@ -244,9 +244,11 @@ export default function App() {
   const addTransaction = async (event) => {
     event.preventDefault()
     if (!selectedCard) return
-    const name = transactionForm.name.trim()
-    const amount = Number.parseFloat(transactionForm.amount)
-    if (!name || !transactionForm.date || !transactionForm.statementMonth || !Number.isFinite(amount)) {
+    const name = String(transactionForm.name || '').trim()
+    const date = transactionForm.date || formatIsoDate(new Date())
+    const statementMonth = transactionForm.statementMonth || formatIsoMonth(new Date())
+    const amount = Number(String(transactionForm.amount ?? '').replace(/[$,]/g, '').trim())
+    if (!name || !date || !statementMonth || !Number.isFinite(amount)) {
       return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     }
     setTransactionBusy(true)
@@ -255,9 +257,9 @@ export default function App() {
       card_id: selectedCard.id,
       type: transactionForm.type,
       name,
-      transaction_date: transactionForm.date,
+      transaction_date: date,
       amount,
-      statement_month: transactionForm.statementMonth + '-01',
+      statement_month: statementMonth + '-01',
     }).select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').single()
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
@@ -367,7 +369,11 @@ function TransactionEditModal({ transaction, form, suggestions, changeForm, save
 }
 
 function TransactionNameTypeahead({ id, value, suggestions, onChange }) {
-  return <Typeahead id={id} options={suggestions} selected={value ? [value] : []} allowNew newSelectionPrefix="" onInputChange={onChange} onChange={(selected) => onChange(selected[0] || '')} placeholder="e.g. Supermarket" inputProps={{ required: true }} />
+  const commitSelection = (selected) => {
+    const item = selected[0]
+    onChange(typeof item === 'string' ? item : item?.label || '')
+  }
+  return <Typeahead id={id} options={suggestions} selected={value ? [value] : []} allowNew newSelectionPrefix="" onInputChange={(text) => onChange(text || '')} onChange={commitSelection} onBlur={(event) => onChange(event.target.value || '')} placeholder="e.g. Supermarket" inputProps={{ required: true, name: 'name' }} />
 }
 
 function parseDate(value) { return value ? new Date(value + 'T00:00:00') : null }
