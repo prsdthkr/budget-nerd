@@ -117,3 +117,5 @@
 @media(max-width:560px){.card-payment-controls{align-items:stretch;flex-direction:column}.card-payment-controls .btn{width:100%}}
 
 .account-card.card{min-height:0;height:auto}.account-card.card .card-body{padding:1rem}.account-card .account-balances{margin-top:1rem}
+
+.ledger-swap-button{width:100%;margin-bottom:1rem}
