@@ -95,3 +95,5 @@
 
 .month-picker-control{height:40px;min-height:40px;padding:.5rem .75rem;line-height:1.5}.react-datepicker__month-container{min-width:230px}.react-datepicker__month-text,.react-datepicker__year-text{min-width:68px;height:40px;margin:4px;padding:9px 10px;line-height:20px}.react-datepicker__month-text--selected,.react-datepicker__year-text--selected{padding:9px 10px}
 @media(max-width:560px){.month-picker-control{height:40px;min-height:40px}}
+
+.react-datepicker__month-container{width:300px;min-width:300px}.react-datepicker__month-text,.react-datepicker__year-text{box-sizing:border-box;width:88px;min-width:88px;margin:4px;padding:9px 4px;font-size:.8rem;line-height:20px;white-space:nowrap;overflow:visible}
