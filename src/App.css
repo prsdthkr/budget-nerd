@@ -9,3 +9,9 @@
 .credit-card.card{width:auto;border:0}
 .modal-backdrop{display:block;padding:0;overflow:hidden;background-color:var(--bs-backdrop-bg);opacity:var(--bs-backdrop-opacity)}
 .react-datepicker-popper{z-index:1080!important}
+
+/* Keep third-party Bootstrap-compatible controls aligned inside transaction forms. */
+.transaction-form .form-label{display:block;margin-top:.55rem;color:#34405a;font-size:.9rem;font-weight:650}
+.transaction-form .rbt,.transaction-form .react-datepicker-wrapper{display:block;width:100%}
+.transaction-form .rbt-input-main,.transaction-form .react-datepicker-wrapper .form-control{width:100%}
+.transaction-form>.btn{width:100%;margin-top:.8rem}
