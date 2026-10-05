@@ -110,3 +110,5 @@
 
 .plan-account-workspace{padding:1.25rem}.account-workspace-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}.account-workspace-header h2{margin-bottom:.25rem}.account-workspace-header p{margin-bottom:0}.plan-account-workspace>.alert{margin-bottom:1rem}.plan-account-workspace .account-modal-summary{margin-bottom:1rem}.plan-account-workspace .plan-ledger-layout{margin-top:.5rem}
 @media(max-width:560px){.account-workspace-header{align-items:stretch;flex-direction:column}.account-workspace-header .d-flex{flex-direction:column}.account-workspace-header .btn{width:100%}}
+
+.account-card.selected{border:2px solid #3958d5;box-shadow:0 0 0 4px rgba(57,88,213,.14),0 16px 35px rgba(36,53,87,.14)}
