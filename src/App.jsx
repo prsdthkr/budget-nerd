@@ -7,6 +7,7 @@ import Form from 'react-bootstrap/Form'
 import InputGroup from 'react-bootstrap/InputGroup'
 import Nav from 'react-bootstrap/Nav'
 import Modal from 'react-bootstrap/Modal'
+import ProgressBar from 'react-bootstrap/ProgressBar'
 import Tab from 'react-bootstrap/Tab'
 import Tabs from 'react-bootstrap/Tabs'
 import { Typeahead } from 'react-bootstrap-typeahead'
@@ -70,6 +71,10 @@ export default function App() {
   const [colorBusy, setColorBusy] = useState(false)
   const [allTransactions, setAllTransactions] = useState([])
   const [allTransactionsLoading, setAllTransactionsLoading] = useState(false)
+  const [categoryLimits, setCategoryLimits] = useState({})
+  const [limitsLoading, setLimitsLoading] = useState(false)
+  const [limitsOpen, setLimitsOpen] = useState(false)
+  const [limitsBusy, setLimitsBusy] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [editTransactionForm, setEditTransactionForm] = useState(defaultTransaction())
   const [editBusy, setEditBusy] = useState(false)
@@ -99,9 +104,11 @@ export default function App() {
     if (session) {
       loadCards()
       loadAllTransactions()
+      loadCategoryLimits()
     } else {
       setCards([])
       setAllTransactions([])
+      setCategoryLimits({})
     }
   }, [session])
 
@@ -132,6 +139,28 @@ export default function App() {
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
+  }
+
+  const loadCategoryLimits = async () => {
+    setLimitsLoading(true)
+    const response = await supabase.from('category_limits').select('category, limit_amount')
+    setLimitsLoading(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    const defaults = Object.fromEntries(TRANSACTION_TYPES.map((type) => [type.value, 1000]))
+    for (const item of response.data || []) defaults[item.category] = Number(item.limit_amount)
+    setCategoryLimits(defaults)
+  }
+
+  const saveCategoryLimits = async () => {
+    if (!session?.user?.id) return
+    setLimitsBusy(true)
+    setNotice(null)
+    const rows = TRANSACTION_TYPES.map((type) => ({ user_id: session.user.id, category: type.value, limit_amount: Number(categoryLimits[type.value] || 0) }))
+    const response = await supabase.from('category_limits').upsert(rows, { onConflict: 'user_id,category' })
+    setLimitsBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setLimitsOpen(false)
+    setNotice({ type: 'success', text: 'Monthly spend limits updated.' })
   }
 
   const changeCredentials = ({ target }) => setCredentials((current) => ({ ...current, [target.name]: target.value }))
@@ -356,13 +385,13 @@ export default function App() {
   </section></main>
 
   return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
-    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : activeView === 'spend' ? <SpendView transactions={allTransactions} limits={categoryLimits} loading={allTransactionsLoading || limitsLoading} openLimits={() => setLimitsOpen(true)} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
-  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
+  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{limitsOpen && <SpendLimitsModal limits={categoryLimits} setLimits={setCategoryLimits} save={saveCategoryLimits} busy={limitsBusy} close={() => setLimitsOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
 
 function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
-  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><Nav className="side-nav" aria-label="Main navigation"><Nav.Link as="button" type="button" className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Nav.Link></Nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
+  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><Nav className="side-nav" aria-label="Main navigation"><Nav.Link as="button" type="button" className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'spend' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('spend')}><span>◔</span>Spend</Nav.Link></Nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
 }
 
 function DashboardView({ session, protectedCheck, protectedBusy, result }) {
