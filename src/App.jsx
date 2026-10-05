@@ -13,7 +13,7 @@ import { Typeahead } from 'react-bootstrap-typeahead'
 import DatePicker from 'react-datepicker'
 
 const blank = { email: '', password: '' }
-const defaultTransaction = (type = 'misc') => ({ type, name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth: new Date().toISOString().slice(0, 7) })
+const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth })
 
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
@@ -61,6 +61,8 @@ export default function App() {
   const [selectedCardColor, setSelectedCardColor] = useState(CARD_COLORS[0].value)
   const [selectedCardDefaultCategory, setSelectedCardDefaultCategory] = useState('misc')
   const [selectedCardStatementDay, setSelectedCardStatementDay] = useState('')
+  const [selectedCardDefaultStatementMonth, setSelectedCardDefaultStatementMonth] = useState('')
+  const [defaultMonthBusy, setDefaultMonthBusy] = useState(false)
   const [transactions, setTransactions] = useState([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [transactionForm, setTransactionForm] = useState(defaultTransaction)
@@ -110,7 +112,7 @@ export default function App() {
 
   const loadCards = async () => {
     setCardsLoading(true)
-    const response = await supabase.from('credit_cards').select('id, name, color, default_category, statement_day, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    const response = await supabase.from('credit_cards').select('id, name, color, default_category, statement_day, default_statement_month, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
     setCardsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setCards(orderCardsByStatementDate(response.data || []))
@@ -178,12 +180,13 @@ export default function App() {
     event.preventDefault()
     const name = cardName.trim()
     const statementDay = normalizeStatementDay(cardStatementDay)
+    const defaultStatementMonth = formatIsoMonth(statementPeriods(statementDay, new Date()).currentDate)
     if (!name) return
     if (cardStatementDay !== '' && statementDay === null) return setNotice({ type: 'error', text: 'Statement date must be a day from 1 to 31, or blank.' })
     setCardBusy(true)
     setNotice(null)
     const nextOrder = cards.length ? Math.max(...cards.map((card) => card.sort_order)) + 1 : 0
-    const response = await supabase.from('credit_cards').insert({ name, color: cardColor, default_category: cardDefaultCategory, statement_day: statementDay, sort_order: nextOrder }).select('id, name, color, default_category, statement_day, sort_order, created_at').single()
+    const response = await supabase.from('credit_cards').insert({ name, color: cardColor, default_category: cardDefaultCategory, statement_day: statementDay, default_statement_month: defaultStatementMonth + '-01', sort_order: nextOrder }).select('id, name, color, default_category, statement_day, default_statement_month, sort_order, created_at').single()
     setCardBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setCards((current) => orderCardsByStatementDate([...current, response.data]))
@@ -201,10 +204,12 @@ export default function App() {
     setSelectedCardDefaultCategory(card.default_category || 'misc')
     setSelectedCardStatementDay(card.statement_day ? String(card.statement_day) : '')
     const periods = statementPeriods(card.statement_day, new Date())
-    setStatementMonthFilter(formatIsoMonth(periods.currentDate))
+    const defaultStatementMonth = card.default_statement_month ? card.default_statement_month.slice(0, 7) : formatIsoMonth(periods.currentDate)
+    setSelectedCardDefaultStatementMonth(defaultStatementMonth)
+    setStatementMonthFilter(defaultStatementMonth)
     setStatementSearch('')
     setWorkspaceTab('add')
-    setTransactionForm(defaultTransaction(card.default_category || 'misc'))
+    setTransactionForm(defaultTransaction(card.default_category || 'misc', defaultStatementMonth))
     setNotice(null)
   }
 
@@ -226,6 +231,19 @@ export default function App() {
     setCards((current) => orderCardsByStatementDate(current.map((card) => card.id === selectedCard.id ? { ...card, color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay } : card)))
     setPreferencesOpen(false)
     setNotice({ type: 'success', text: 'Card preferences updated.' })
+  }
+
+  const saveDefaultStatementMonth = async () => {
+    if (!selectedCard || !selectedCardDefaultStatementMonth) return
+    setDefaultMonthBusy(true)
+    setNotice(null)
+    const response = await supabase.from('credit_cards').update({ default_statement_month: selectedCardDefaultStatementMonth + '-01' }).eq('id', selectedCard.id)
+    setDefaultMonthBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setCards((current) => current.map((card) => card.id === selectedCard.id ? { ...card, default_statement_month: selectedCardDefaultStatementMonth + '-01' } : card))
+    setTransactionForm((current) => ({ ...current, statementMonth: selectedCardDefaultStatementMonth }))
+    setStatementMonthFilter(selectedCardDefaultStatementMonth)
+    setNotice({ type: 'success', text: 'Default statement month updated.' })
   }
 
   const deleteCard = async (card) => {
@@ -288,7 +306,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
     setAllTransactions((current) => [response.data, ...current])
-    setTransactionForm(defaultTransaction(selectedCard.default_category || 'misc'))
+    setTransactionForm(defaultTransaction(selectedCard.default_category || 'misc', selectedCard.default_statement_month ? selectedCard.default_statement_month.slice(0, 7) : formatIsoMonth(statementPeriods(selectedCard.statement_day, new Date()).currentDate)))
     setNotice({ type: 'success', text: 'Transaction added to ' + selectedCard.name + '.' })
   }
 
@@ -340,7 +358,7 @@ export default function App() {
   return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
     {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
-  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
+  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
 
 function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
@@ -409,12 +427,12 @@ function ColorPicker({ label, value, onChange }) {
   return <div className="color-picker"><span className="field-label">{label}</span><div className="color-options" role="radiogroup" aria-label={label}>{CARD_COLORS.map((color) => <Button type="button" key={color.value} className={value === color.value ? 'color-swatch selected' : 'color-swatch'} style={{ background: color.value }} title={color.name} aria-label={color.name} aria-checked={value === color.value} role="radio" onClick={() => onChange(color.value)}><span>{value === color.value ? '✓' : ''}</span></Button>)}</div></div>
 }
 
-function CardDetailModal({ card, statementSummary, workspaceTab, setWorkspaceTab, statementMonthFilter, setStatementMonthFilter, statementSearch, setStatementSearch, openPreferences, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
+function CardDetailModal({ card, statementSummary, selectedCardDefaultStatementMonth, setSelectedCardDefaultStatementMonth, saveDefaultStatementMonth, defaultMonthBusy, workspaceTab, setWorkspaceTab, statementMonthFilter, setStatementMonthFilter, statementSearch, setStatementSearch, openPreferences, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
   return <Modal show onHide={closeCard} centered size="xl" dialogClassName="transaction-modal-dialog" scrollable>
     <Modal.Header closeButton><Modal.Title><span className="eyebrow d-block">Card workspace</span>{card.name}</Modal.Title></Modal.Header>
     <Modal.Body><Tabs activeKey={workspaceTab} onSelect={(key) => setWorkspaceTab(key || 'add')} className="workspace-tabs">
       <Tab eventKey="add" title="Add transaction"><div className="detail-columns transaction-workspace">
-        <div className="card-preferences-column"><CreditCardVisual card={card} statementSummary={statementSummary} className="card-modal-preview" /><Button type="button" variant="outline-primary" onClick={openPreferences}>Edit card preferences</Button></div>
+        <div className="card-preferences-column"><CreditCardVisual card={card} statementSummary={statementSummary} className="card-modal-preview" /><Button type="button" variant="outline-primary" onClick={openPreferences}>Edit card preferences</Button><Form.Label className="mt-2" htmlFor="default-statement-month">Default statement month</Form.Label><DatePicker id="default-statement-month" selected={parseMonth(selectedCardDefaultStatementMonth)} onChange={(date) => { if (date) setSelectedCardDefaultStatementMonth(formatIsoMonth(date)) }} showMonthYearPicker showFullMonthYearPicker dateFormat="MMM yyyy" customInput={<Form.Control />} /><Button type="button" variant="link" className="p-0 align-self-start" onClick={saveDefaultStatementMonth} disabled={defaultMonthBusy}>{defaultMonthBusy ? 'Saving...' : 'Save default month'}</Button></div>
         <div className="transaction-form-column"><div className="detail-section"><p className="eyebrow">New transaction</p><h3>Add a transaction</h3><Form className="transaction-form" onSubmit={addTransaction}><div className="transaction-types" role="radiogroup" aria-label="Transaction type">{TRANSACTION_TYPES.map((type) => <Button type="button" variant={transactionForm.type === type.value ? 'primary' : 'light'} key={type.value} className={transactionForm.type === type.value ? 'transaction-type selected' : 'transaction-type'} aria-pressed={transactionForm.type === type.value} onClick={() => changeTransaction({ target: { name: 'type', value: type.value } })}><span>{type.emoji}</span><small>{type.label}</small></Button>)}</div><Form.Label htmlFor="transaction-name">Name</Form.Label><TransactionNameTypeahead id="transaction-name" value={transactionForm.name} suggestions={transactionSuggestions} onChange={(value) => changeTransaction({ target: { name: 'name', value } })} /><div className="form-row"><div><Form.Label htmlFor="transaction-date">Date</Form.Label><DatePicker id="transaction-date" selected={parseDate(transactionForm.date)} onChange={(date) => { if (date) changeTransaction({ target: { name: 'date', value: formatIsoDate(date) } }) }} onSelect={(date) => { if (date) changeTransaction({ target: { name: 'date', value: formatIsoDate(date) } }) }} onChangeRaw={(event) => { const parsed = parseUserDate(event?.target?.value || ''); if (parsed) changeTransaction({ target: { name: 'date', value: formatIsoDate(parsed) } }) }} dateFormat={['M/d/yyyy', 'M/d', 'MMM d, yyyy']} placeholderText="M/D or M/D/YYYY" customInput={<Form.Control />} required /></div><div><Form.Label htmlFor="transaction-amount">Dollar value</Form.Label><InputGroup><InputGroup.Text>$</InputGroup.Text><Form.Control id="transaction-amount" name="amount" type="number" step="0.01" value={transactionForm.amount} onChange={changeTransaction} placeholder="0.00" required /></InputGroup></div></div><Form.Label htmlFor="statement-month">Statement month</Form.Label><DatePicker id="statement-month" selected={parseMonth(transactionForm.statementMonth)} onChange={(date) => changeTransaction({ target: { name: 'statementMonth', value: formatIsoMonth(date) } })} showMonthYearPicker showFullMonthYearPicker dateFormat="MMM yyyy" customInput={<Form.Control />} required /><Button type="submit" variant="primary" disabled={transactionBusy}>{transactionBusy ? 'Saving...' : 'Add transaction'}</Button></Form></div></div>
         <div className="transaction-history recent-transactions-panel"><div className="history-heading"><h3>Recent transactions</h3><span>{Math.min(transactions.length, 10)}</span></div>{transactionsLoading ? <p className="muted">Loading transactions...</p> : transactions.length === 0 ? <p className="muted">No transactions for this card yet.</p> : <div className="transaction-list">{transactions.slice(0, 10).map((transaction) => <div className="transaction-row" key={transaction.id}><span className="transaction-emoji">{transactionType(transaction.type).emoji}</span><div className="transaction-meta"><strong>{transaction.name}</strong><small>{transactionType(transaction.type).label} · {formatDate(transaction.transaction_date)} · Statement {formatMonth(transaction.statement_month)}</small></div><strong className="transaction-amount">{formatAmount(transaction.amount)}</strong><div className="transaction-row-actions"><Button type="button" size="sm" variant="outline-primary" onClick={() => openEditTransaction(transaction)}>Edit</Button><Button type="button" size="sm" variant="outline-danger" onClick={() => deleteTransaction(transaction)}>Delete</Button></div></div>)}</div>}</div>
       </div></Tab>
