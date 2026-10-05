@@ -157,7 +157,7 @@ begin
   if (TG_OP = 'DELETE' or TG_OP = 'UPDATE') then
     target_card_id := old.card_id;
     target_statement_month := old.statement_month;
-    if old.source_type is not null and target_card_id is not null and target_statement_month is not null then
+    if target_card_id is not null and target_statement_month is not null then
       select coalesce(sum(amount), 0) into statement_total from public.card_transactions where card_id = target_card_id and statement_month = target_statement_month;
       update public.account_ledger_items set planned_amount = -statement_total where source_type = 'card_payment' and card_id = target_card_id and statement_month = target_statement_month;
     end if;
