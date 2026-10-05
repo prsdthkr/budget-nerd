@@ -342,7 +342,7 @@ function CardsView({ cards, allTransactions, cardsLoading, cardName, setCardName
 
 function CreditCardView({ card, statementTotal, openCard }) {
   const clickCard = () => openCard(card)
-  return <Card className="credit-card" style={{ '--card-color': card.color || CARD_COLORS[0].value }} onClick={clickCard} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') clickCard() }} role="button" tabIndex="0"><Card.Body><Card.Title>{card.name}</Card.Title><div className="statement-summary"><div><small>Statement date</small><strong>{card.statement_day ? formatStatementDay(card.statement_day) : 'Not set'}</strong></div><div><small>Current statement</small><strong>{formatAmount(statementTotal)}</strong></div></div></Card.Body></Card>
+  return <Card className="credit-card" style={{ '--card-color': card.color || CARD_COLORS[0].value }} onClick={clickCard} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') clickCard() }} role="button" tabIndex="0"><Card.Body><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{card.statement_day ? formatStatementDay(card.statement_day) : 'Not set'}</strong><strong>{formatAmount(statementTotal)}</strong></div></Card.Body></Card>
 }
 
 function currentStatementTotal(card, transactions) {
