@@ -92,3 +92,6 @@
 
 .month-picker-control{min-width:180px;width:100%}.react-datepicker-wrapper{display:block;width:100%}.spend-heading-actions .react-datepicker-wrapper{width:180px}.spend-heading-actions .month-picker-control{min-width:0}
 @media(max-width:560px){.month-picker-control{min-width:0}.spend-heading-actions .react-datepicker-wrapper{width:100%}}
+
+.month-picker-control{height:40px;min-height:40px;padding:.5rem .75rem;line-height:1.5}.react-datepicker__month-container{min-width:230px}.react-datepicker__month-text,.react-datepicker__year-text{min-width:68px;height:40px;margin:4px;padding:9px 10px;line-height:20px}.react-datepicker__month-text--selected,.react-datepicker__year-text--selected{padding:9px 10px}
+@media(max-width:560px){.month-picker-control{height:40px;min-height:40px}}
