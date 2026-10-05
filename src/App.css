@@ -73,3 +73,5 @@
 /* Let the statement tab consume the full fixed modal height. */
 .transaction-modal-dialog .modal-body{display:flex;flex-direction:column;overflow:hidden}.transaction-modal-dialog .workspace-tabs+.tab-content{display:flex;flex:1 1 auto;min-height:0;overflow:auto;flex-direction:column}.transaction-modal-dialog .workspace-tabs+.tab-content>.tab-pane{min-height:100%}.statement-view{display:flex;flex:1 1 auto;min-height:100%;flex-direction:column}.statement-transaction-list{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto}
 @media(max-width:760px){.transaction-modal-dialog .modal-body{overflow:hidden}.transaction-modal-dialog .workspace-tabs+.tab-content{overflow-y:auto}}
+
+.transaction-modal-dialog .workspace-tabs+.tab-content{padding-top:1.5rem}.card-preferences-column .react-datepicker-wrapper{display:block;width:100%}.card-preferences-column .react-datepicker-wrapper .form-control{width:100%}.card-preferences-column .btn-link{align-self:flex-start}
