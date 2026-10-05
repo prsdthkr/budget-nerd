@@ -30,7 +30,7 @@ create table if not exists public.card_transactions (
   type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit')),
   name text not null check (char_length(btrim(name)) between 1 and 120),
   transaction_date date not null default current_date,
-  amount numeric(12, 2) not null check (amount >= 0),
+  amount numeric(12, 2) not null,
   statement_month date not null check (statement_month = date_trunc('month', statement_month)::date),
   created_at timestamptz not null default now()
 );
