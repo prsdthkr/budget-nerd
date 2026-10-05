@@ -33,3 +33,5 @@
 @media(max-width:700px){.cards-grid{grid-template-columns:1fr}}
 
 .add-card-trigger{min-height:44px;padding:.7rem 1.1rem;white-space:nowrap}
+
+.add-card-trigger{height:38px;min-height:0;padding:.375rem .75rem;line-height:1.5}
