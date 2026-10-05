@@ -19,7 +19,7 @@ The existing project already has the authentication, profiles, pings, and credit
 
     supabase/migrations/20261005_card_colors_and_transactions.sql
 
-It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month, followed by supabase/migrations/20261005_card_default_statement_month.sql to add the saved default statement month.
 
 For a brand-new Supabase project, run supabase/schema.sql instead.
 
@@ -30,6 +30,7 @@ The Cards section supports:
 - Selecting a color from a twelve-color palette when adding a card.
 - Saving a default transaction category for each card, used automatically for new transactions.
 - Optionally saving a statement day from 1 to 31 for each card.
+- Saving a default statement month used when entering new transactions.
 - Editing and saving a card color by clicking the card.
 - Adding transactions from the selected card.
 - Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, Remit, Cashback, and Car.
