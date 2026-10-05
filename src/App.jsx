@@ -38,7 +38,7 @@ const TRANSACTION_TYPES = [
 
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
 const blankActivityFilters = { name: '', amount: '', dateFrom: '', dateTo: '', statementMonth: '', cardId: '', category: '' }
-const defaultLedgerForm = () => ({ description: '', date: new Date().toISOString().slice(0, 10), realizedAmount: '', plannedAmount: '', recurring: false })
+const defaultLedgerForm = (accountId = '') => ({ accountId, description: '', date: new Date().toISOString().slice(0, 10), realizedAmount: '', plannedAmount: '', recurring: false })
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -98,6 +98,7 @@ export default function App() {
   const [ledgerForm, setLedgerForm] = useState(defaultLedgerForm)
   const [editingLedger, setEditingLedger] = useState(null)
   const [ledgerBusy, setLedgerBusy] = useState(false)
+  const [paymentBusy, setPaymentBusy] = useState(false)
 
   const selectedCard = cards.find((card) => card.id === selectedCardId) || null
   const transactionSuggestions = [...new Set(allTransactions.filter((transaction) => transaction.type === transactionForm.type).map((transaction) => transaction.name))]
@@ -169,7 +170,7 @@ export default function App() {
     setBankLoading(true)
     const [accountsResponse, ledgerResponse] = await Promise.all([
       supabase.from('bank_accounts').select('id, name, account_number, routing_number, starting_balance, minimum_balance, created_at').order('created_at', { ascending: true }),
-      supabase.from('account_ledger_items').select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').order('ledger_date', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('account_ledger_items').select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').order('ledger_date', { ascending: false }).order('created_at', { ascending: false }),
     ])
     setBankLoading(false)
     if (accountsResponse.error) return setNotice({ type: 'error', text: accountsResponse.error.message })
@@ -181,7 +182,7 @@ export default function App() {
   const openBankAccount = (account) => {
     setSelectedAccountId(account.id)
     setPlanMonth(formatIsoMonth(new Date()))
-    setLedgerForm(defaultLedgerForm())
+    setLedgerForm(defaultLedgerForm(account.id))
     setEditingLedger(null)
   }
 
@@ -214,12 +215,13 @@ export default function App() {
     const plannedAmount = Number(String(ledgerForm.plannedAmount || 0).replace(/[$,]/g, ''))
     if (!ledgerForm.date || !Number.isFinite(realizedAmount) || !Number.isFinite(plannedAmount)) return setNotice({ type: 'error', text: 'Enter a date and valid realized and planned amounts.' })
     setLedgerBusy(true)
-    const values = { account_id: selectedAccountId, description: ledgerForm.description.trim(), ledger_date: ledgerForm.date, realized_amount: realizedAmount, planned_amount: plannedAmount, recurring: ledgerForm.recurring }
-    const response = editingLedger ? await supabase.from('account_ledger_items').update(values).eq('id', editingLedger.id).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single()
+    const ledgerAccountId = ledgerForm.accountId || selectedAccountId
+    const values = { account_id: ledgerAccountId, description: ledgerForm.description.trim(), ledger_date: ledgerForm.date, realized_amount: realizedAmount, planned_amount: plannedAmount, recurring: ledgerForm.recurring }
+    const response = editingLedger ? await supabase.from('account_ledger_items').update(values).eq('id', editingLedger.id).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single()
     setLedgerBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => editingLedger ? current.map((item) => item.id === response.data.id ? response.data : item) : [response.data, ...current])
-    setLedgerForm(defaultLedgerForm())
+    setLedgerForm(defaultLedgerForm(selectedAccountId))
     setEditingLedger(null)
     setNotice({ type: 'success', text: editingLedger ? 'Ledger item updated.' : 'Ledger item added.' })
   }
@@ -227,7 +229,7 @@ export default function App() {
   const editLedgerItem = (item) => {
     if (!item) return
     setEditingLedger(item)
-    setLedgerForm({ description: item.description || '', date: item.ledger_date, realizedAmount: String(item.realized_amount), plannedAmount: String(item.planned_amount), recurring: item.recurring })
+    setLedgerForm({ accountId: item.account_id, description: item.description || '', date: item.ledger_date, realizedAmount: String(item.realized_amount), plannedAmount: String(item.planned_amount), recurring: item.recurring })
   }
 
   const deleteLedgerItem = async (item) => {
@@ -235,7 +237,7 @@ export default function App() {
     const response = await supabase.from('account_ledger_items').delete().eq('id', item.id)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => current.filter((entry) => entry.id !== item.id))
-    if (editingLedger?.id === item.id) { setEditingLedger(null); setLedgerForm(defaultLedgerForm()) }
+    if (editingLedger?.id === item.id) { setEditingLedger(null); setLedgerForm(defaultLedgerForm(selectedAccountId)) }
     setNotice({ type: 'success', text: 'Ledger item deleted.' })
   }
 
