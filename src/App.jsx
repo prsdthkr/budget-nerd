@@ -337,34 +337,39 @@ function DashboardView({ session, protectedCheck, protectedBusy, result }) {
 }
 
 function CardsView({ cards, allTransactions, cardsLoading, cardName, setCardName, cardColor, setCardColor, cardDefaultCategory, setCardDefaultCategory, cardStatementDay, setCardStatementDay, cardBusy, addCard, openCard }) {
-  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Your wallet</p><h1>Credit cards</h1><p className="muted">Click a card to view its statement and manage transactions.</p></div></div><section className="content-card add-card-panel"><Form className="add-card-form" onSubmit={addCard}><div className="add-card-fields"><div><Form.Label htmlFor="card-name">Card name</Form.Label><Form.Control id="card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} placeholder="e.g. Everyday Rewards" maxLength={80} required /></div><ColorPicker label="Card color" value={cardColor} onChange={setCardColor} /><CategoryPicker label="Default category" value={cardDefaultCategory} onChange={setCardDefaultCategory} /><div className="statement-day-field"><Form.Label htmlFor="card-statement-day">Statement date (optional)</Form.Label><Form.Control id="card-statement-day" type="number" min="1" max="31" value={cardStatementDay} onChange={(event) => setCardStatementDay(event.target.value)} placeholder="Day 1–31" /></div></div><Button type="submit" className="primary-button" disabled={cardBusy}>{cardBusy ? 'Adding...' : 'Add card'}</Button></Form></section>{cardsLoading ? <p className="loading">Loading your cards...</p> : cards.length === 0 ? <section className="empty-state"><div className="empty-icon">▣</div><h2>No cards yet</h2><p className="muted">Add your first card above.</p></section> : <div className="cards-grid">{cards.map((card) => <CreditCardView key={card.id} card={card} statementTotal={currentStatementTotal(card, allTransactions)} openCard={openCard} />)}</div>}</div>
+  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Your wallet</p><h1>Credit cards</h1><p className="muted">Click a card to view its statement and manage transactions.</p></div></div><section className="content-card add-card-panel"><Form className="add-card-form" onSubmit={addCard}><div className="add-card-fields"><div><Form.Label htmlFor="card-name">Card name</Form.Label><Form.Control id="card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} placeholder="e.g. Everyday Rewards" maxLength={80} required /></div><ColorPicker label="Card color" value={cardColor} onChange={setCardColor} /><CategoryPicker label="Default category" value={cardDefaultCategory} onChange={setCardDefaultCategory} /><div className="statement-day-field"><Form.Label htmlFor="card-statement-day">Statement date (optional)</Form.Label><Form.Control id="card-statement-day" type="number" min="1" max="31" value={cardStatementDay} onChange={(event) => setCardStatementDay(event.target.value)} placeholder="Day 1–31" /></div></div><Button type="submit" className="primary-button" disabled={cardBusy}>{cardBusy ? 'Adding...' : 'Add card'}</Button></Form></section>{cardsLoading ? <p className="loading">Loading your cards...</p> : cards.length === 0 ? <section className="empty-state"><div className="empty-icon">▣</div><h2>No cards yet</h2><p className="muted">Add your first card above.</p></section> : <div className="cards-grid">{cards.map((card) => <CreditCardView key={card.id} card={card} statementSummary={statementSummary(card, allTransactions)} openCard={openCard} />)}</div>}</div>
 }
 
-function CreditCardView({ card, statementTotal, openCard }) {
+function CreditCardView({ card, statementSummary, openCard }) {
   const clickCard = () => openCard(card)
-  return <Card className="credit-card" style={{ '--card-color': card.color || CARD_COLORS[0].value }} onClick={clickCard} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') clickCard() }} role="button" tabIndex="0"><Card.Body><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{card.statement_day ? formatStatementDay(card.statement_day) : 'Not set'}</strong><strong>{formatAmount(statementTotal)}</strong></div></Card.Body></Card>
+  return <Card className="credit-card" style={{ '--card-color': card.color || CARD_COLORS[0].value }} onClick={clickCard} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') clickCard() }} role="button" tabIndex="0"><Card.Body><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
 }
 
-function currentStatementTotal(card, transactions) {
-  const window = statementWindow(card.statement_day)
-  return transactions.filter((transaction) => transaction.card_id === card.id).filter((transaction) => { const date = parseDate(transaction.transaction_date); return date >= window.start && date < window.end }).reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
-}
-
-function statementWindow(statementDay) {
+function statementSummary(card, transactions) {
   const now = new Date()
-  if (!statementDay) return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: new Date(now.getFullYear(), now.getMonth() + 1, 1) }
+  const periods = statementPeriods(card.statement_day, now)
+  const totalBetween = (start, end) => transactions.filter((transaction) => transaction.card_id === card.id).filter((transaction) => { const date = parseDate(transaction.transaction_date); return date >= start && date < end }).reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+  return { currentDate: periods.currentDate, currentTotal: totalBetween(periods.currentStart, periods.currentEnd), nextDate: periods.nextDate, nextTotal: totalBetween(periods.nextStart, periods.nextEnd) }
+}
+
+function statementPeriods(statementDay, now) {
+  if (!statementDay) {
+    const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const nextStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const afterNextStart = new Date(now.getFullYear(), now.getMonth() + 2, 1)
+    return { currentDate: currentStart, currentStart, currentEnd: nextStart, nextDate: nextStart, nextStart, nextEnd: afterNextStart }
+  }
   const requestedDay = Number(statementDay)
   const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate()
-  const dayFor = (year, month) => Math.min(requestedDay, daysInMonth(year, month))
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), dayFor(now.getFullYear(), now.getMonth()))
-  const start = now >= thisMonthStart ? thisMonthStart : new Date(now.getFullYear(), now.getMonth() - 1, dayFor(now.getFullYear(), now.getMonth() - 1))
-  return { start, end: new Date(start.getFullYear(), start.getMonth() + 1, dayFor(start.getFullYear(), start.getMonth() + 1)) }
+  const dateFor = (year, month) => new Date(year, month, Math.min(requestedDay, daysInMonth(year, month)))
+  let currentDate = dateFor(now.getFullYear(), now.getMonth())
+  if (currentDate <= now) currentDate = dateFor(now.getFullYear(), now.getMonth() + 1)
+  const previousDate = dateFor(currentDate.getFullYear(), currentDate.getMonth() - 1)
+  const nextDate = dateFor(currentDate.getFullYear(), currentDate.getMonth() + 1)
+  return { currentDate, currentStart: previousDate, currentEnd: currentDate, nextDate, nextStart: currentDate, nextEnd: nextDate }
 }
 
-function formatStatementDay(statementDay) {
-  const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), Number(statementDay)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
+function formatStatementDate(value) { return value.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }
 
 function CategoryPicker({ label, value, onChange }) {
   return <div className="category-picker"><Form.Label>{label}</Form.Label><Form.Select value={value} onChange={(event) => onChange(event.target.value)}>{TRANSACTION_TYPES.map((type) => <option value={type.value} key={type.value}>{type.emoji} {type.label}</option>)}</Form.Select></div>
