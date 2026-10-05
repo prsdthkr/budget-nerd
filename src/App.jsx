@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import Alert from 'react-bootstrap/Alert'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
+import Nav from 'react-bootstrap/Nav'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import DatePicker from 'react-datepicker'
 
@@ -313,7 +314,7 @@ export default function App() {
 }
 
 function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
-  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><nav className="side-nav" aria-label="Main navigation"><Button className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Button><Button className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Button><Button className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Button></nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
+  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><Nav className="side-nav" aria-label="Main navigation"><Nav.Link as="button" type="button" className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Nav.Link></Nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
 }
 
 function DashboardView({ session, protectedCheck, protectedBusy, result }) {
