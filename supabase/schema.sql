@@ -33,6 +33,7 @@ create table if not exists public.bank_accounts (
   account_number text not null,
   routing_number text not null,
   starting_balance numeric(12, 2) not null default 0,
+  minimum_balance numeric(12, 2) not null default 0 check (minimum_balance >= 0),
   created_at timestamptz not null default now()
 );
 
