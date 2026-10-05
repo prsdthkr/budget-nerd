@@ -44,3 +44,7 @@
 .transaction-workspace{grid-template-columns:minmax(380px,1.15fr) minmax(300px,.85fr);align-items:start}.transaction-form-column{display:flex;flex-direction:column;gap:1rem;min-width:0}.transaction-workspace .recent-transactions-panel{height:100%;max-height:520px;margin:0;padding:1.25rem;border:1px solid #e5eaf2;border-radius:14px;background:#fbfcfe;overflow-y:auto}.transaction-workspace .recent-transactions-panel .transaction-list{padding-right:.25rem}
 @media(max-width:900px){.transaction-workspace{grid-template-columns:1fr 1fr}.transaction-workspace .recent-transactions-panel{max-height:460px}}
 @media(max-width:760px){.transaction-workspace{grid-template-columns:1fr}.transaction-workspace .recent-transactions-panel{height:auto;max-height:280px}}
+
+.transaction-workspace{grid-template-columns:minmax(220px,.8fr) minmax(360px,1.25fr) minmax(280px,1fr);align-items:start}.card-preferences-column{display:flex;flex-direction:column;gap:1rem;min-width:0}.transaction-workspace .recent-transactions-panel{height:520px;max-height:520px}
+@media(max-width:1050px){.transaction-workspace{grid-template-columns:minmax(220px,.8fr) minmax(340px,1.2fr)}.transaction-workspace .recent-transactions-panel{grid-column:1/-1;height:300px;max-height:300px}}
+@media(max-width:760px){.transaction-workspace{grid-template-columns:1fr}.transaction-workspace .recent-transactions-panel{grid-column:auto;height:auto;max-height:280px}}
