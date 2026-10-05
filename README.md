@@ -79,3 +79,6 @@ The Spend side navigation calculates category totals using each transaction's ca
 ## Plan workspace
 
 Plan contains user-scoped bank accounts with masked account display, current balances from realized ledger amounts, and predicted balances from realized plus planned amounts. Ledger items support signed or zero realized/planned amounts, descriptions, dates, editing, deletion, and recurring copy-forward to the next month.
+
+
+Planned credit-card payments are linked to a card and statement month. Their planned ledger amount is automatically synchronized to the negative sum of that statement's transactions. Select a bank account in the Statement transactions tab to create or move the planned payment. The card-transaction sync migration is supabase/migrations/20261005_card_payment_ledger_links.sql.
