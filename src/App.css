@@ -20,3 +20,5 @@
 .react-datepicker{font-family:inherit}
 
 .statement-day-field{min-width:0}.statement-day-field .form-label{display:block;margin:0 0 .5rem;color:#34405a;font-size:.9rem;font-weight:650}
+
+.credit-card.card{min-height:180px;padding:0;overflow:hidden}.credit-card.card .card-body{display:flex;flex-direction:column;min-height:180px;padding:1.35rem}.credit-card.card .card-title{margin:0 0 auto;color:#fff;font-size:1.35rem;font-weight:750;letter-spacing:-.02em}.statement-summary{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2rem}.statement-summary div{display:grid;gap:.25rem}.statement-summary small{color:rgba(255,255,255,.72);font-size:.7rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}.statement-summary strong{color:#fff;font-size:1rem}
