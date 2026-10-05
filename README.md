@@ -19,7 +19,7 @@ The existing project already has the authentication, profiles, pings, and credit
 
     supabase/migrations/20261005_card_colors_and_transactions.sql
 
-It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month, followed by supabase/migrations/20261005_card_default_statement_month.sql to add the saved default statement month, and supabase/migrations/20261005_category_spend_limits.sql for monthly spend limits.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month, followed by supabase/migrations/20261005_card_default_statement_month.sql to add the saved default statement month, and supabase/migrations/20261005_category_spend_limits.sql for monthly spend limits. Run supabase/migrations/20261005_bank_accounts_and_ledger.sql for the Plan bank-account ledger.
 
 For a brand-new Supabase project, run supabase/schema.sql instead.
 
@@ -74,3 +74,8 @@ The app uses React-Bootstrap and Bootstrap CSS for buttons, forms, alerts, navig
 ## Spend dashboard
 
 The Spend side navigation calculates category totals using each transaction's calendar month from transaction_date. It shows elapsed days in the current calendar month, category spend, configured limit, and percentage with green, yellow, or red progress indicators. Limits are user-scoped and can be edited from the Spend page.
+
+
+## Plan workspace
+
+Plan contains user-scoped bank accounts with masked account display, current balances from realized ledger amounts, and predicted balances from realized plus planned amounts. Ledger items support signed or zero realized/planned amounts, descriptions, dates, editing, deletion, and recurring copy-forward to the next month.
