@@ -401,7 +401,7 @@ function ColorPicker({ label, value, onChange }) {
 }
 
 function CardDetailModal({ card, statementSummary, openPreferences, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
-  return <Modal show onHide={closeCard} centered size="xl" scrollable>
+  return <Modal show onHide={closeCard} centered size="xl" dialogClassName="transaction-modal-dialog" scrollable>
     <Modal.Header closeButton><Modal.Title><span className="eyebrow d-block">Card workspace</span>{card.name}</Modal.Title></Modal.Header>
     <Modal.Body>
       <div className="detail-columns transaction-workspace">

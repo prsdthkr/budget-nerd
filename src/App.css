@@ -48,3 +48,6 @@
 .transaction-workspace{grid-template-columns:minmax(220px,.8fr) minmax(360px,1.25fr) minmax(280px,1fr);align-items:start}.card-preferences-column{display:flex;flex-direction:column;gap:1rem;min-width:0}.transaction-workspace .recent-transactions-panel{height:520px;max-height:520px}
 @media(max-width:1050px){.transaction-workspace{grid-template-columns:minmax(220px,.8fr) minmax(340px,1.2fr)}.transaction-workspace .recent-transactions-panel{grid-column:1/-1;height:300px;max-height:300px}}
 @media(max-width:760px){.transaction-workspace{grid-template-columns:1fr}.transaction-workspace .recent-transactions-panel{grid-column:auto;height:auto;max-height:280px}}
+
+.transaction-modal-dialog{width:calc(100vw - 2rem);max-width:1400px}
+@media(max-width:760px){.transaction-modal-dialog{width:100%;max-width:100%}}
