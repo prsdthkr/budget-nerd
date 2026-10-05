@@ -19,7 +19,7 @@ The existing project already has the authentication, profiles, pings, and credit
 
     supabase/migrations/20261005_card_colors_and_transactions.sql
 
-It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month, followed by supabase/migrations/20261005_card_default_statement_month.sql to add the saved default statement month.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card, then run supabase/migrations/20261005_card_statement_day.sql to add an optional statement day-of-month, followed by supabase/migrations/20261005_card_default_statement_month.sql to add the saved default statement month, and supabase/migrations/20261005_category_spend_limits.sql for monthly spend limits.
 
 For a brand-new Supabase project, run supabase/schema.sql instead.
 
@@ -69,3 +69,8 @@ This repository already exists at https://github.com/prsdthkr/budget-nerd.
 ## UI components
 
 The app uses React-Bootstrap and Bootstrap CSS for buttons, forms, alerts, navigation, modals, cards, input groups, and selects. Date fields use react-datepicker with Bootstrap inputs, and transaction names use react-bootstrap-typeahead with category-aware suggestions.
+
+
+## Spend dashboard
+
+The Spend side navigation calculates category totals using each transaction's calendar month from transaction_date. It shows elapsed days in the current calendar month, category spend, configured limit, and percentage with green, yellow, or red progress indicators. Limits are user-scoped and can be edited from the Spend page.
