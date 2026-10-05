@@ -115,3 +115,5 @@
 
 .card-payment-planner{display:grid;gap:.75rem;margin-bottom:1.25rem;padding:1rem;border:1px solid #dce3ef;border-radius:12px;background:#f6f8fd}.card-payment-planner>div:first-child{display:grid;gap:.2rem}.card-payment-planner small{color:#647089}.card-payment-controls{display:flex;align-items:center;gap:.75rem}.card-payment-controls .form-select{flex:1}.card-payment-controls .btn{white-space:nowrap}
 @media(max-width:560px){.card-payment-controls{align-items:stretch;flex-direction:column}.card-payment-controls .btn{width:100%}}
+
+.account-card.card{min-height:0;height:auto}.account-card.card .card-body{padding:1rem}.account-card .account-balances{margin-top:1rem}
