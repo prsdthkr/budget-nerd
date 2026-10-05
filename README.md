@@ -18,7 +18,7 @@ The existing project already has the authentication, profiles, pings, and credit
 
     supabase/migrations/20261005_card_colors_and_transactions.sql
 
-It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds. Finally, run supabase/migrations/20261005_card_default_category.sql to add a saved default category to every card.
 
 For a brand-new Supabase project, run supabase/schema.sql instead.
 
@@ -27,6 +27,7 @@ For a brand-new Supabase project, run supabase/schema.sql instead.
 The Cards section supports:
 
 - Selecting a color from a twelve-color palette when adding a card.
+- Saving a default transaction category for each card, used automatically for new transactions.
 - Editing and saving a card color by clicking the card.
 - Adding transactions from the selected card.
 - Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, Remit, and Cashback.
@@ -35,6 +36,7 @@ The Cards section supports:
 - A Transactions side navigation page showing all transactions across cards.
 - Editing or deleting existing transactions.
 - Negative transaction amounts for credits such as cashback and refunds.
+- Category-aware autocomplete suggestions based on previously saved transaction names.
 - Persistent card reordering and deletion.
 
 Only the card name, selected color, and transaction fields entered by the user are stored. The app does not store card numbers, CVVs, expiration dates, or payment credentials.
