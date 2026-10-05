@@ -1,10 +1,8 @@
 # Budget Nerd
 
-A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, and Vercel deployment support.
+A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, card colors, transactions, and Vercel deployment support.
 
 ## Local setup
-
-Requirements: Node.js 20+, npm, and the GitHub CLI.
 
     git clone https://github.com/prsdthkr/budget-nerd.git
     cd budget-nerd
@@ -12,38 +10,31 @@ Requirements: Node.js 20+, npm, and the GitHub CLI.
     cp .env.example .env
     npm run dev
 
-Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env using the values from Supabase Dashboard -> Project Settings -> API. The publishable key can be used as VITE_SUPABASE_ANON_KEY. Never use the service-role or secret key in this app.
+Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env using Supabase Dashboard -> Project Settings -> API. The publishable key can be used as VITE_SUPABASE_ANON_KEY. Never use the service-role or secret key in this app.
 
-Build with:
+## Supabase migration
 
-    npm run build
+The existing project already has the authentication, profiles, pings, and credit_cards setup. Run this new migration in Supabase Dashboard -> SQL Editor:
 
-## Supabase setup
+    supabase/migrations/20261005_card_colors_and_transactions.sql
 
-For a new project, run supabase/schema.sql in Supabase Dashboard -> SQL Editor. For an existing project that already has the profiles and pings tables, run supabase/migrations/20261005_credit_cards.sql instead.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache.
 
-The migration creates public.credit_cards with:
+For a brand-new Supabase project, run supabase/schema.sql instead.
 
-- id: generated UUID
-- user_id: authenticated owner
-- name: the only card detail currently entered by the user
-- sort_order: persistent UI ordering
-- created_at: creation timestamp
+## Card workspace
 
-RLS restricts select, insert, update, and delete operations to the authenticated owner. The app never stores card numbers, CVVs, expiration dates, or other sensitive payment data.
+The Cards section supports:
 
-In Authentication -> URL Configuration, add http://localhost:5173 and your Vercel URL as allowed redirect URLs.
+- Selecting a color from a twelve-color palette when adding a card.
+- Editing and saving a card color by clicking the card.
+- Adding transactions from the selected card.
+- Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, and Remit.
+- Transaction name, date, dollar value, and statement month/year.
+- Viewing recent transactions for each card.
+- Persistent card reordering and deletion.
 
-## Credit cards workspace
-
-The authenticated app has a side navigation with Dashboard and Cards sections. Cards supports:
-
-- Adding a card by name
-- Viewing cards in a responsive visual grid
-- Deleting a card
-- Moving cards up and down to persist their order
-
-The credit_cards model is intentionally small so future fields and features such as transactions, limits, rewards, and statements can be added without storing payment credentials.
+Only the card name, selected color, and transaction fields entered by the user are stored. The app does not store card numbers, CVVs, expiration dates, or payment credentials.
 
 ## GitHub CLI
 
