@@ -29,6 +29,7 @@ const TRANSACTION_TYPES = [
   { value: 'food', label: 'Food', emoji: '🍽️' },
   { value: 'remit', label: 'Remit', emoji: '💸' },
   { value: 'cashback', label: 'Cashback', emoji: '💰' },
+  { value: 'car', label: 'Car', emoji: '🚗' },
 ]
 
 export default function App() {

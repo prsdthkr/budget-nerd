@@ -19,7 +19,7 @@ create table if not exists public.credit_cards (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   name text not null check (char_length(btrim(name)) between 1 and 80),
   color text not null default '#2563eb',
-  default_category text not null default 'misc' check (default_category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback')),
+  default_category text not null default 'misc' check (default_category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car')),
   statement_day smallint null check (statement_day is null or statement_day between 1 and 31),
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
@@ -29,7 +29,7 @@ create table if not exists public.card_transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   card_id uuid not null references public.credit_cards(id) on delete cascade,
-  type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback')),
+  type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car')),
   name text not null check (char_length(btrim(name)) between 1 and 120),
   transaction_date date not null default current_date,
   amount numeric(12, 2) not null,

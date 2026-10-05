@@ -32,7 +32,7 @@ The Cards section supports:
 - Optionally saving a statement day from 1 to 31 for each card.
 - Editing and saving a card color by clicking the card.
 - Adding transactions from the selected card.
-- Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, Remit, and Cashback.
+- Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, Remit, Cashback, and Car.
 - Transaction name, date, dollar value, and statement month/year.
 - Viewing recent transactions for each card.
 - A Transactions side navigation page showing all transactions across cards.
