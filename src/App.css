@@ -128,3 +128,7 @@
 @media(max-width:1200px){.plan-page-layout{grid-template-columns:minmax(250px,.75fr) minmax(540px,1.25fr)}}
 @media(max-width:900px){.plan-page-layout{grid-template-columns:1fr}.plan-ledger-column .plan-account-workspace{min-height:0}.plan-accounts-column .account-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.plan-accounts-column .account-grid{grid-template-columns:1fr}}
+
+.plan-account-workspace{display:grid;grid-template-columns:minmax(300px,.75fr) minmax(650px,1.65fr);gap:1.25rem;padding:0;border:0;background:transparent;box-shadow:none}.plan-account-details,.plan-ledger-card{min-width:0;padding:1.25rem}.plan-ledger-card{min-height:calc(100vh - 7rem)}.plan-ledger-card .ledger-date-groups{max-height:none}
+@media(max-width:1100px){.plan-account-workspace{grid-template-columns:minmax(280px,.8fr) minmax(500px,1.2fr)}}
+@media(max-width:900px){.plan-account-workspace{grid-template-columns:1fr}.plan-ledger-card{min-height:0}}
