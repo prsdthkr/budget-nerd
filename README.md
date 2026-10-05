@@ -1,12 +1,13 @@
 # Budget Nerd
 
-A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, card colors, transaction management, and Vercel deployment support.
+A React + Vite budget workspace using React-Bootstrap controls with Supabase email/password authentication, Row Level Security, user-owned credit cards, card colors, transaction management, and Vercel deployment support.
 
 ## Local setup
 
     git clone https://github.com/prsdthkr/budget-nerd.git
     cd budget-nerd
     npm install
+    npm install react-bootstrap bootstrap react-bootstrap-typeahead react-datepicker
     cp .env.example .env
     npm run dev
 
@@ -61,3 +62,8 @@ This repository already exists at https://github.com/prsdthkr/budget-nerd.
 4. Enable both variables for Production, Preview, and Development.
 5. Redeploy after saving variables.
 6. Add the Vercel production and preview URLs to Supabase Authentication -> URL Configuration.
+
+
+## UI components
+
+The app uses React-Bootstrap and Bootstrap CSS for buttons, forms, alerts, navigation, modals, cards, input groups, and selects. Date fields use react-datepicker with Bootstrap inputs, and transaction names use react-bootstrap-typeahead with category-aware suggestions.
