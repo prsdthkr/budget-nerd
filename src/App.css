@@ -37,3 +37,6 @@
 .add-card-trigger{height:38px;min-height:0;padding:.375rem .75rem;line-height:1.5}
 
 .credit-card.card{min-height:220px}.card-modal-preview.card{cursor:default}.card-modal-preview.card:hover{transform:none;box-shadow:0 14px 28px color-mix(in srgb,var(--card-color) 28%,transparent)}
+
+.transaction-column{display:flex;flex-direction:column;gap:1rem;min-width:0}.transaction-column>.detail-section{height:auto}.recent-transactions-panel{max-height:300px;overflow-y:auto;margin-top:0;padding-top:1rem}.recent-transactions-panel .transaction-list{padding-right:.25rem}
+@media(max-width:760px){.recent-transactions-panel{max-height:280px}}
