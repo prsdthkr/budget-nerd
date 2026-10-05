@@ -89,3 +89,6 @@
 .activity-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;padding-bottom:1.25rem;border-bottom:1px solid #e5eaf2}.activity-filters .form-label{font-weight:650}.activity-filters .react-datepicker-wrapper{display:block;width:100%}.activity-filter-actions{display:flex;align-items:end;gap:.6rem}.activity-filter-actions .btn{height:38px}.activity-results-heading{margin-top:1.25rem}.activity-results-heading h3{margin:0}.activity-results-heading span{min-width:1.5rem;padding:.2rem .4rem;border-radius:99px;color:#3958d5;background:#edf1ff;text-align:center;font-size:.75rem;font-weight:800}
 @media(max-width:900px){.activity-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.activity-filters{grid-template-columns:1fr}.activity-filter-actions{align-items:stretch}.activity-filter-actions .btn{flex:1}}
+
+.month-picker-control{min-width:180px;width:100%}.react-datepicker-wrapper{display:block;width:100%}.spend-heading-actions .react-datepicker-wrapper{width:180px}.spend-heading-actions .month-picker-control{min-width:0}
+@media(max-width:560px){.month-picker-control{min-width:0}.spend-heading-actions .react-datepicker-wrapper{width:100%}}
