@@ -38,6 +38,7 @@ const TRANSACTION_TYPES = [
 
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
 const blankActivityFilters = { name: '', amount: '', dateFrom: '', dateTo: '', statementMonth: '', cardId: '', category: '' }
+const defaultLedgerForm = () => ({ description: '', date: new Date().toISOString().slice(0, 10), realizedAmount: '', plannedAmount: '', recurring: false })
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -85,6 +86,17 @@ export default function App() {
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [editTransactionForm, setEditTransactionForm] = useState(defaultTransaction())
   const [editBusy, setEditBusy] = useState(false)
+  const [bankAccounts, setBankAccounts] = useState([])
+  const [bankLedger, setBankLedger] = useState([])
+  const [bankLoading, setBankLoading] = useState(false)
+  const [addAccountOpen, setAddAccountOpen] = useState(false)
+  const [accountForm, setAccountForm] = useState({ name: '', accountNumber: '', routingNumber: '', startingBalance: '' })
+  const [accountBusy, setAccountBusy] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState(null)
+  const [planMonth, setPlanMonth] = useState(() => formatIsoMonth(new Date()))
+  const [ledgerForm, setLedgerForm] = useState(defaultLedgerForm)
+  const [editingLedger, setEditingLedger] = useState(null)
+  const [ledgerBusy, setLedgerBusy] = useState(false)
 
   const selectedCard = cards.find((card) => card.id === selectedCardId) || null
   const transactionSuggestions = [...new Set(allTransactions.filter((transaction) => transaction.type === transactionForm.type).map((transaction) => transaction.name))]
@@ -112,11 +124,14 @@ export default function App() {
       loadCards()
       loadAllTransactions()
       loadCategoryLimits()
+      loadBankData()
     } else {
       setCards([])
       setAllTransactions([])
       setActivityTransactions([])
       setCategoryLimits({})
+      setBankAccounts([])
+      setBankLedger([])
     }
   }, [session])
 
@@ -147,6 +162,87 @@ export default function App() {
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
+  }
+
+  const loadBankData = async () => {
+    setBankLoading(true)
+    const [accountsResponse, ledgerResponse] = await Promise.all([
+      supabase.from('bank_accounts').select('id, name, account_number, routing_number, starting_balance, created_at').order('created_at', { ascending: true }),
+      supabase.from('account_ledger_items').select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').order('ledger_date', { ascending: false }).order('created_at', { ascending: false }),
+    ])
+    setBankLoading(false)
+    if (accountsResponse.error) return setNotice({ type: 'error', text: accountsResponse.error.message })
+    if (ledgerResponse.error) return setNotice({ type: 'error', text: ledgerResponse.error.message })
+    setBankAccounts(accountsResponse.data || [])
+    setBankLedger(ledgerResponse.data || [])
+  }
+
+  const openBankAccount = (account) => {
+    setSelectedAccountId(account.id)
+    setPlanMonth(formatIsoMonth(new Date()))
+    setLedgerForm(defaultLedgerForm())
+    setEditingLedger(null)
+  }
+
+  const saveBankAccount = async (event) => {
+    event.preventDefault()
+    const name = accountForm.name.trim()
+    const accountNumber = accountForm.accountNumber.trim()
+    const routingNumber = accountForm.routingNumber.trim()
+    const startingBalance = Number(String(accountForm.startingBalance || 0).replace(/[$,]/g, ''))
+    if (!name || !accountNumber || !routingNumber || !Number.isFinite(startingBalance)) return setNotice({ type: 'error', text: 'Enter an account name, account number, routing number, and valid starting balance.' })
+    setAccountBusy(true)
+    const response = await supabase.from('bank_accounts').insert({ name, account_number: accountNumber, routing_number: routingNumber, starting_balance: startingBalance }).select('id, name, account_number, routing_number, starting_balance, created_at').single()
+    setAccountBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setBankAccounts((current) => [...current, response.data])
+    setAccountForm({ name: '', accountNumber: '', routingNumber: '', startingBalance: '' })
+    setAddAccountOpen(false)
+    setNotice({ type: 'success', text: 'Bank account added.' })
+  }
+
+  const changeLedgerForm = ({ target }) => setLedgerForm((current) => ({ ...current, [target.name]: target.type === 'checkbox' ? target.checked : target.value }))
+
+  const saveLedgerItem = async (event) => {
+    event.preventDefault()
+    if (!selectedAccountId) return
+    const realizedAmount = Number(String(ledgerForm.realizedAmount || 0).replace(/[$,]/g, ''))
+    const plannedAmount = Number(String(ledgerForm.plannedAmount || 0).replace(/[$,]/g, ''))
+    if (!ledgerForm.date || !Number.isFinite(realizedAmount) || !Number.isFinite(plannedAmount)) return setNotice({ type: 'error', text: 'Enter a date and valid realized and planned amounts.' })
+    setLedgerBusy(true)
+    const values = { account_id: selectedAccountId, description: ledgerForm.description.trim(), ledger_date: ledgerForm.date, realized_amount: realizedAmount, planned_amount: plannedAmount, recurring: ledgerForm.recurring }
+    const response = editingLedger ? await supabase.from('account_ledger_items').update(values).eq('id', editingLedger.id).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single()
+    setLedgerBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setBankLedger((current) => editingLedger ? current.map((item) => item.id === response.data.id ? response.data : item) : [response.data, ...current])
+    setLedgerForm(defaultLedgerForm())
+    setEditingLedger(null)
+    setNotice({ type: 'success', text: editingLedger ? 'Ledger item updated.' : 'Ledger item added.' })
+  }
+
+  const editLedgerItem = (item) => {
+    setEditingLedger(item)
+    setLedgerForm({ description: item.description || '', date: item.ledger_date, realizedAmount: String(item.realized_amount), plannedAmount: String(item.planned_amount), recurring: item.recurring })
+  }
+
+  const deleteLedgerItem = async (item) => {
+    if (!window.confirm('Delete this ledger item? This cannot be undone.')) return
+    const response = await supabase.from('account_ledger_items').delete().eq('id', item.id)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setBankLedger((current) => current.filter((entry) => entry.id !== item.id))
+    if (editingLedger?.id === item.id) { setEditingLedger(null); setLedgerForm(defaultLedgerForm()) }
+    setNotice({ type: 'success', text: 'Ledger item deleted.' })
+  }
+
+  const copyRecurringLedger = async () => {
+    if (!selectedAccountId) return
+    const currentItems = bankLedger.filter((item) => item.account_id === selectedAccountId && item.ledger_date.slice(0, 7) === planMonth && item.recurring)
+    if (!currentItems.length) return setNotice({ type: 'error', text: 'There are no recurring items in this month to copy.' })
+    const nextItems = currentItems.map((item) => ({ account_id: selectedAccountId, description: item.description, ledger_date: nextMonthDate(item.ledger_date), realized_amount: 0, planned_amount: Number(item.planned_amount) || Number(item.realized_amount) || 0, recurring: true, recurrence_id: item.recurrence_id }))
+    const response = await supabase.from('account_ledger_items').upsert(nextItems, { onConflict: 'account_id,recurrence_id,ledger_date', ignoreDuplicates: true }).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at')
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setBankLedger((current) => [...current, ...(response.data || [])])
+    setNotice({ type: 'success', text: 'Recurring items copied to the next month.' })
   }
 
   const loadActivityTransactions = async (filters = activityFilters) => {
@@ -405,6 +501,8 @@ export default function App() {
     setNotice({ type: 'success', text: 'Transaction deleted.' })
   }
 
+  const selectedAccount = bankAccounts.find((account) => account.id === selectedAccountId) || null
+
   const navigateTo = (view) => {
     setActiveView(view)
     if (view === 'transactions') loadActivityTransactions()
@@ -419,13 +517,13 @@ export default function App() {
   </section></main>
 
   return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={navigateTo} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
-    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={activityTransactions} cards={cards} loading={activityLoading} filters={activityFilters} setFilters={setActivityFilters} onSearch={(filters) => loadActivityTransactions(filters)} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : activeView === 'spend' ? <SpendView transactions={allTransactions} limits={categoryLimits} month={spendMonth} setMonth={setSpendMonth} loading={allTransactionsLoading || limitsLoading} openLimits={() => setLimitsOpen(true)} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+    {activeView === 'cards' ? <CardsView cards={cards} allTransactions={allTransactions} cardsLoading={cardsLoading} openCard={openCard} openAddCard={() => setAddCardOpen(true)} /> : activeView === 'transactions' ? <TransactionsView transactions={activityTransactions} cards={cards} loading={activityLoading} filters={activityFilters} setFilters={setActivityFilters} onSearch={(filters) => loadActivityTransactions(filters)} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : activeView === 'spend' ? <SpendView transactions={allTransactions} limits={categoryLimits} month={spendMonth} setMonth={setSpendMonth} loading={allTransactionsLoading || limitsLoading} openLimits={() => setLimitsOpen(true)} /> : activeView === 'plan' ? <PlanView accounts={bankAccounts} ledger={bankLedger} loading={bankLoading} openAddAccount={() => setAddAccountOpen(true)} openAccount={openBankAccount} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
-  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{limitsOpen && <SpendLimitsModal limits={categoryLimits} setLimits={setCategoryLimits} save={saveCategoryLimits} busy={limitsBusy} close={() => setLimitsOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
+  </section>{selectedCard && <CardDetailModal card={selectedCard} statementSummary={statementSummary(selectedCard, allTransactions)} selectedCardDefaultStatementMonth={selectedCardDefaultStatementMonth} setSelectedCardDefaultStatementMonth={setSelectedCardDefaultStatementMonth} saveDefaultStatementMonth={saveDefaultStatementMonth} defaultMonthBusy={defaultMonthBusy} workspaceTab={workspaceTab} setWorkspaceTab={setWorkspaceTab} statementMonthFilter={statementMonthFilter} setStatementMonthFilter={setStatementMonthFilter} statementSearch={statementSearch} setStatementSearch={setStatementSearch} openPreferences={() => setPreferencesOpen(true)} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{selectedCard && preferencesOpen && <CardPreferencesModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} close={() => setPreferencesOpen(false)} />}{addCardOpen && <AddCardModal cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} addCard={addCard} close={() => setAddCardOpen(false)} />}{selectedAccount && <BankAccountModal account={selectedAccount} ledger={bankLedger.filter((item) => item.account_id === selectedAccount.id)} month={planMonth} setMonth={setPlanMonth} ledgerForm={ledgerForm} changeLedgerForm={changeLedgerForm} saveLedgerItem={saveLedgerItem} ledgerBusy={ledgerBusy} editingLedger={editingLedger} editLedgerItem={editLedgerItem} deleteLedgerItem={deleteLedgerItem} copyRecurringLedger={copyRecurringLedger} close={() => { setSelectedAccountId(null); setEditingLedger(null) }} />}{addAccountOpen && <AddBankAccountModal form={accountForm} setForm={setAccountForm} save={saveBankAccount} busy={accountBusy} close={() => setAddAccountOpen(false)} />}{limitsOpen && <SpendLimitsModal limits={categoryLimits} setLimits={setCategoryLimits} save={saveCategoryLimits} busy={limitsBusy} close={() => setLimitsOpen(false)} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
 
 function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
-  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><Nav className="side-nav" aria-label="Main navigation"><Nav.Link as="button" type="button" className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'spend' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('spend')}><span>◔</span>Spend</Nav.Link></Nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
+  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><Nav className="side-nav" aria-label="Main navigation"><Nav.Link as="button" type="button" className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'spend' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('spend')}><span>◔</span>Spend</Nav.Link><Nav.Link as="button" type="button" className={activeView === 'plan' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('plan')}><span>▤</span>Plan</Nav.Link></Nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><Button className="nav-signout" onClick={signOut}>Sign out</Button></div></aside>
 }
 
 function SpendView({ transactions, limits, month, setMonth, loading, openLimits }) {
