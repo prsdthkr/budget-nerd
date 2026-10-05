@@ -46,11 +46,13 @@ export default function App() {
   const [cardName, setCardName] = useState('')
   const [cardColor, setCardColor] = useState(CARD_COLORS[0].value)
   const [cardDefaultCategory, setCardDefaultCategory] = useState('misc')
+  const [cardStatementDay, setCardStatementDay] = useState('')
   const [cardBusy, setCardBusy] = useState(false)
   const [cardActionId, setCardActionId] = useState(null)
   const [selectedCardId, setSelectedCardId] = useState(null)
   const [selectedCardColor, setSelectedCardColor] = useState(CARD_COLORS[0].value)
   const [selectedCardDefaultCategory, setSelectedCardDefaultCategory] = useState('misc')
+  const [selectedCardStatementDay, setSelectedCardStatementDay] = useState('')
   const [transactions, setTransactions] = useState([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [transactionForm, setTransactionForm] = useState(defaultTransaction)
@@ -100,7 +102,7 @@ export default function App() {
 
   const loadCards = async () => {
     setCardsLoading(true)
-    const response = await supabase.from('credit_cards').select('id, name, color, default_category, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+    const response = await supabase.from('credit_cards').select('id, name, color, default_category, statement_day, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
     setCardsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setCards(response.data || [])
@@ -167,17 +169,20 @@ export default function App() {
   const addCard = async (event) => {
     event.preventDefault()
     const name = cardName.trim()
+    const statementDay = normalizeStatementDay(cardStatementDay)
     if (!name) return
+    if (cardStatementDay !== '' && statementDay === null) return setNotice({ type: 'error', text: 'Statement date must be a day from 1 to 31, or blank.' })
     setCardBusy(true)
     setNotice(null)
     const nextOrder = cards.length ? Math.max(...cards.map((card) => card.sort_order)) + 1 : 0
-    const response = await supabase.from('credit_cards').insert({ name, color: cardColor, default_category: cardDefaultCategory, sort_order: nextOrder }).select('id, name, color, default_category, sort_order, created_at').single()
+    const response = await supabase.from('credit_cards').insert({ name, color: cardColor, default_category: cardDefaultCategory, statement_day: statementDay, sort_order: nextOrder }).select('id, name, color, default_category, statement_day, sort_order, created_at').single()
     setCardBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setCards((current) => [...current, response.data])
     setCardName('')
     setCardColor(CARD_COLORS[0].value)
     setCardDefaultCategory('misc')
+    setCardStatementDay('')
     setNotice({ type: 'success', text: 'Credit card added.' })
   }
 
@@ -185,6 +190,7 @@ export default function App() {
     setSelectedCardId(card.id)
     setSelectedCardColor(card.color || CARD_COLORS[0].value)
     setSelectedCardDefaultCategory(card.default_category || 'misc')
+    setSelectedCardStatementDay(card.statement_day ? String(card.statement_day) : '')
     setTransactionForm(defaultTransaction(card.default_category || 'misc'))
     setNotice(null)
   }
@@ -196,13 +202,15 @@ export default function App() {
 
   const saveCardColor = async () => {
     if (!selectedCard) return
+    const statementDay = normalizeStatementDay(selectedCardStatementDay)
+    if (selectedCardStatementDay !== '' && statementDay === null) return setNotice({ type: 'error', text: 'Statement date must be a day from 1 to 31, or blank.' })
     setColorBusy(true)
     setNotice(null)
-    const response = await supabase.from('credit_cards').update({ color: selectedCardColor, default_category: selectedCardDefaultCategory }).eq('id', selectedCard.id)
+    const response = await supabase.from('credit_cards').update({ color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay }).eq('id', selectedCard.id)
     setColorBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
-    setCards((current) => current.map((card) => card.id === selectedCard.id ? { ...card, color: selectedCardColor, default_category: selectedCardDefaultCategory } : card))
-    setNotice({ type: 'success', text: 'Card color updated.' })
+    setCards((current) => current.map((card) => card.id === selectedCard.id ? { ...card, color: selectedCardColor, default_category: selectedCardDefaultCategory, statement_day: statementDay } : card))
+    setNotice({ type: 'success', text: 'Card preferences updated.' })
   }
 
   const deleteCard = async (card) => {
@@ -315,9 +323,9 @@ export default function App() {
   </section></main>
 
   return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
-    {activeView === 'cards' ? <CardsView cards={cards} cardsLoading={cardsLoading} cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardBusy={cardBusy} cardActionId={cardActionId} addCard={addCard} deleteCard={deleteCard} moveCard={moveCard} openCard={openCard} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+    {activeView === 'cards' ? <CardsView cards={cards} cardsLoading={cardsLoading} cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardDefaultCategory={cardDefaultCategory} setCardDefaultCategory={setCardDefaultCategory} cardStatementDay={cardStatementDay} setCardStatementDay={setCardStatementDay} cardBusy={cardBusy} cardActionId={cardActionId} addCard={addCard} deleteCard={deleteCard} moveCard={moveCard} openCard={openCard} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
-  </section>{selectedCard && <CardDetailModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} saveCardColor={saveCardColor} colorBusy={colorBusy} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
+  </section>{selectedCard && <CardDetailModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} selectedCardDefaultCategory={selectedCardDefaultCategory} setSelectedCardDefaultCategory={setSelectedCardDefaultCategory} selectedCardStatementDay={selectedCardStatementDay} setSelectedCardStatementDay={setSelectedCardStatementDay} saveCardColor={saveCardColor} colorBusy={colorBusy} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} transactionSuggestions={transactionSuggestions} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} suggestions={editTransactionSuggestions} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
 
 function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
@@ -328,8 +336,8 @@ function DashboardView({ session, protectedCheck, protectedBusy, result }) {
   return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Private dashboard</p><h1>Hello World</h1><p className="muted">Your personal finance workspace starts here.</p></div></div><div className="welcome-panel"><span className="status-dot" /><div><p className="muted">Signed in as</p><strong>{session.user.email}</strong></div></div><section className="content-card protected-panel"><div><p className="eyebrow">Protected data check</p><h2>Test authenticated Supabase access</h2><p className="muted">Reads your profile and inserts a user-owned ping through Row Level Security.</p></div><Button className="primary-button" onClick={protectedCheck} disabled={protectedBusy}>{protectedBusy ? 'Checking...' : 'Run protected check'}</Button></section>{result && <pre className="result-box">{JSON.stringify(result, null, 2)}</pre>}</div>
 }
 
-function CardsView({ cards, cardsLoading, cardName, setCardName, cardColor, setCardColor, cardDefaultCategory, setCardDefaultCategory, cardBusy, cardActionId, addCard, deleteCard, moveCard, openCard }) {
-  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Your wallet</p><h1>Credit cards</h1><p className="muted">Click any card to edit its color or add a transaction.</p></div></div><section className="content-card add-card-panel"><Form className="add-card-form" onSubmit={addCard}><div className="add-card-fields"><div><label htmlFor="card-name">Card name</label><Form.Control id="card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} placeholder="e.g. Everyday Rewards" maxLength={80} required /></div><ColorPicker label="Card color" value={cardColor} onChange={setCardColor} /><CategoryPicker label="Default category" value={cardDefaultCategory} onChange={setCardDefaultCategory} /></div><Button type="submit" className="primary-button" disabled={cardBusy}>{cardBusy ? 'Adding...' : 'Add card'}</Button></Form></section>{cardsLoading ? <p className="loading">Loading your cards...</p> : cards.length === 0 ? <section className="empty-state"><div className="empty-icon">▣</div><h2>No cards yet</h2><p className="muted">Add your first card above. Only its name and chosen color are stored.</p></section> : <div className="cards-grid">{cards.map((card, index) => <CreditCardView key={card.id} card={card} index={index} total={cards.length} cardActionId={cardActionId} moveCard={moveCard} deleteCard={deleteCard} openCard={openCard} />)}</div>}</div>
+function CardsView({ cards, cardsLoading, cardName, setCardName, cardColor, setCardColor, cardDefaultCategory, setCardDefaultCategory, cardStatementDay, setCardStatementDay, cardBusy, cardActionId, addCard, deleteCard, moveCard, openCard }) {
+  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Your wallet</p><h1>Credit cards</h1><p className="muted">Click any card to edit its color or add a transaction.</p></div></div><section className="content-card add-card-panel"><Form className="add-card-form" onSubmit={addCard}><div className="add-card-fields"><div><label htmlFor="card-name">Card name</label><Form.Control id="card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} placeholder="e.g. Everyday Rewards" maxLength={80} required /></div><ColorPicker label="Card color" value={cardColor} onChange={setCardColor} /><CategoryPicker label="Default category" value={cardDefaultCategory} onChange={setCardDefaultCategory} /><div className="statement-day-field"><Form.Label htmlFor="card-statement-day">Statement date (optional)</Form.Label><Form.Control id="card-statement-day" type="number" min="1" max="31" value={cardStatementDay} onChange={(event) => setCardStatementDay(event.target.value)} placeholder="Day 1–31" /></div></div><Button type="submit" className="primary-button" disabled={cardBusy}>{cardBusy ? 'Adding...' : 'Add card'}</Button></Form></section>{cardsLoading ? <p className="loading">Loading your cards...</p> : cards.length === 0 ? <section className="empty-state"><div className="empty-icon">▣</div><h2>No cards yet</h2><p className="muted">Add your first card above. Only its name and chosen color are stored.</p></section> : <div className="cards-grid">{cards.map((card, index) => <CreditCardView key={card.id} card={card} index={index} total={cards.length} cardActionId={cardActionId} moveCard={moveCard} deleteCard={deleteCard} openCard={openCard} />)}</div>}</div>
 }
 
 function CreditCardView({ card, index, total, cardActionId, moveCard, deleteCard, openCard }) {
@@ -345,14 +353,14 @@ function ColorPicker({ label, value, onChange }) {
   return <div className="color-picker"><span className="field-label">{label}</span><div className="color-options" role="radiogroup" aria-label={label}>{CARD_COLORS.map((color) => <Button type="button" key={color.value} className={value === color.value ? 'color-swatch selected' : 'color-swatch'} style={{ background: color.value }} title={color.name} aria-label={color.name} aria-checked={value === color.value} role="radio" onClick={() => onChange(color.value)}><span>{value === color.value ? '✓' : ''}</span></Button>)}</div></div>
 }
 
-function CardDetailModal({ card, selectedCardColor, setSelectedCardColor, selectedCardDefaultCategory, setSelectedCardDefaultCategory, saveCardColor, colorBusy, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
+function CardDetailModal({ card, selectedCardColor, setSelectedCardColor, selectedCardDefaultCategory, setSelectedCardDefaultCategory, selectedCardStatementDay, setSelectedCardStatementDay, saveCardColor, colorBusy, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
   return <Modal show onHide={closeCard} centered size="lg" scrollable>
     <Modal.Header closeButton><Modal.Title><span className="eyebrow d-block">Card workspace</span>{card.name}</Modal.Title></Modal.Header>
     <Modal.Body>
       <div className="detail-columns">
         <div>
           <div className="detail-preview" style={{ '--card-color': selectedCardColor }}><div className="card-chip" /><span>{card.name}</span><div className="card-placeholder">••••  ••••  ••••  ••••</div></div>
-          <div className="detail-section mt-3"><h3>Card preferences</h3><ColorPicker label="Choose a color" value={selectedCardColor} onChange={setSelectedCardColor} /><CategoryPicker label="Default transaction category" value={selectedCardDefaultCategory} onChange={setSelectedCardDefaultCategory} /><Button type="button" variant="outline-primary" className="save-color-button" onClick={saveCardColor} disabled={colorBusy}>{colorBusy ? 'Saving...' : 'Save preferences'}</Button></div>
+          <div className="detail-section mt-3"><h3>Card preferences</h3><ColorPicker label="Choose a color" value={selectedCardColor} onChange={setSelectedCardColor} /><CategoryPicker label="Default transaction category" value={selectedCardDefaultCategory} onChange={setSelectedCardDefaultCategory} /><div className="statement-day-field"><Form.Label htmlFor="selected-card-statement-day">Statement date (optional)</Form.Label><Form.Control id="selected-card-statement-day" type="number" min="1" max="31" value={selectedCardStatementDay} onChange={(event) => setSelectedCardStatementDay(event.target.value)} placeholder="Day 1–31" /></div><Button type="button" variant="outline-primary" className="save-color-button" onClick={saveCardColor} disabled={colorBusy}>{colorBusy ? 'Saving...' : 'Save preferences'}</Button></div>
         </div>
         <div className="transaction-column"><div className="detail-section"><p className="eyebrow">New transaction</p><h3>Add a transaction</h3><Form className="transaction-form" onSubmit={addTransaction}><div className="transaction-types" role="radiogroup" aria-label="Transaction type">{TRANSACTION_TYPES.map((type) => <Button type="button" variant={transactionForm.type === type.value ? 'primary' : 'light'} key={type.value} className={transactionForm.type === type.value ? 'transaction-type selected' : 'transaction-type'} aria-pressed={transactionForm.type === type.value} onClick={() => changeTransaction({ target: { name: 'type', value: type.value } })}><span>{type.emoji}</span><small>{type.label}</small></Button>)}</div><Form.Label htmlFor="transaction-name">Name</Form.Label><TransactionNameTypeahead id="transaction-name" value={transactionForm.name} suggestions={transactionSuggestions} onChange={(value) => changeTransaction({ target: { name: 'name', value } })} /><div className="form-row"><div><Form.Label htmlFor="transaction-date">Date</Form.Label><DatePicker id="transaction-date" selected={parseDate(transactionForm.date)} onChange={(date) => { if (date) changeTransaction({ target: { name: 'date', value: formatIsoDate(date) } }) }} onSelect={(date) => { if (date) changeTransaction({ target: { name: 'date', value: formatIsoDate(date) } }) }} onChangeRaw={(event) => { const parsed = parseUserDate(event?.target?.value || ''); if (parsed) changeTransaction({ target: { name: 'date', value: formatIsoDate(parsed) } }) }} dateFormat={['M/d/yyyy', 'M/d', 'MMM d, yyyy']} placeholderText="M/D or M/D/YYYY" customInput={<Form.Control />} required /></div><div><Form.Label htmlFor="transaction-amount">Dollar value</Form.Label><InputGroup><InputGroup.Text>$</InputGroup.Text><Form.Control id="transaction-amount" name="amount" type="number" step="0.01" value={transactionForm.amount} onChange={changeTransaction} placeholder="0.00" required /></InputGroup></div></div><Form.Label htmlFor="statement-month">Statement month</Form.Label><DatePicker id="statement-month" selected={parseMonth(transactionForm.statementMonth)} onChange={(date) => changeTransaction({ target: { name: 'statementMonth', value: formatIsoMonth(date) } })} showMonthYearPicker showFullMonthYearPicker dateFormat="MMM yyyy" customInput={<Form.Control />} required /><Button type="submit" variant="primary" disabled={transactionBusy}>{transactionBusy ? 'Saving...' : 'Add transaction'}</Button></Form></div></div>
       </div>
@@ -379,6 +387,11 @@ function TransactionNameTypeahead({ id, value, suggestions, onChange }) {
 }
 
 function parseDate(value) { return value ? new Date(value + 'T00:00:00') : null }
+function normalizeStatementDay(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const day = Number(value)
+  return Number.isInteger(day) && day >= 1 && day <= 31 ? day : null
+}
 function parseUserDate(value) {
   const match = value.trim().match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/)
   if (!match) return null
