@@ -44,6 +44,11 @@ export default function App() {
   const [transactionForm, setTransactionForm] = useState(defaultTransaction)
   const [transactionBusy, setTransactionBusy] = useState(false)
   const [colorBusy, setColorBusy] = useState(false)
+  const [allTransactions, setAllTransactions] = useState([])
+  const [allTransactionsLoading, setAllTransactionsLoading] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState(null)
+  const [editTransactionForm, setEditTransactionForm] = useState(defaultTransaction())
+  const [editBusy, setEditBusy] = useState(false)
 
   const selectedCard = cards.find((card) => card.id === selectedCardId) || null
 
@@ -65,8 +70,13 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (session) loadCards()
-    else setCards([])
+    if (session) {
+      loadCards()
+      loadAllTransactions()
+    } else {
+      setCards([])
+      setAllTransactions([])
+    }
   }, [session])
 
   useEffect(() => {
@@ -88,6 +98,14 @@ export default function App() {
     setTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions(response.data || [])
+  }
+
+  const loadAllTransactions = async () => {
+    setAllTransactionsLoading(true)
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    setAllTransactionsLoading(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setAllTransactions(response.data || [])
   }
 
   const changeCredentials = ({ target }) => setCredentials((current) => ({ ...current, [target.name]: target.value }))
@@ -180,6 +198,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     if (selectedCardId === card.id) closeCard()
     setCards((current) => current.filter((item) => item.id !== card.id))
+    setAllTransactions((current) => current.filter((item) => item.card_id !== card.id))
     setNotice({ type: 'success', text: 'Credit card deleted.' })
   }
 
@@ -211,7 +230,7 @@ export default function App() {
     if (!selectedCard) return
     const name = transactionForm.name.trim()
     const amount = Number.parseFloat(transactionForm.amount)
-    if (!name || !transactionForm.date || !transactionForm.statementMonth || !Number.isFinite(amount) || amount < 0) {
+    if (!name || !transactionForm.date || !transactionForm.statementMonth || !Number.isFinite(amount)) {
       return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     }
     setTransactionBusy(true)
@@ -227,8 +246,44 @@ export default function App() {
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
+    setAllTransactions((current) => [response.data, ...current])
     setTransactionForm(defaultTransaction())
     setNotice({ type: 'success', text: 'Transaction added to ' + selectedCard.name + '.' })
+  }
+
+  const openEditTransaction = (transaction) => {
+    setEditingTransaction(transaction)
+    setEditTransactionForm({ type: transaction.type, name: transaction.name, date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7) })
+    setNotice(null)
+  }
+
+  const changeEditTransaction = ({ target }) => setEditTransactionForm((current) => ({ ...current, [target.name]: target.value }))
+
+  const saveTransaction = async (event) => {
+    event.preventDefault()
+    if (!editingTransaction) return
+    const name = editTransactionForm.name.trim()
+    const amount = Number.parseFloat(editTransactionForm.amount)
+    if (!name || !editTransactionForm.date || !editTransactionForm.statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
+    setEditBusy(true)
+    setNotice(null)
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, transaction_date: editTransactionForm.date, amount, statement_month: editTransactionForm.statementMonth + '-01' }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, created_at').single()
+    setEditBusy(false)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
+    setTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
+    setEditingTransaction(null)
+    setNotice({ type: 'success', text: 'Transaction updated.' })
+  }
+
+  const deleteTransaction = async (transaction) => {
+    if (!window.confirm('Delete ' + transaction.name + '? This cannot be undone.')) return
+    const response = await supabase.from('card_transactions').delete().eq('id', transaction.id)
+    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    setAllTransactions((current) => current.filter((item) => item.id !== transaction.id))
+    setTransactions((current) => current.filter((item) => item.id !== transaction.id))
+    if (editingTransaction?.id === transaction.id) setEditingTransaction(null)
+    setNotice({ type: 'success', text: 'Transaction deleted.' })
   }
 
   if (loading) return <main className="page-shell"><p className="loading">Loading...</p></main>
@@ -239,14 +294,14 @@ export default function App() {
     <button className="link-button" type="button" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setNotice(null) }}>{mode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up'}</button>{notice && <Notice notice={notice} />}
   </section></main>
 
-  return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
-    {activeView === 'cards' ? <CardsView cards={cards} cardsLoading={cardsLoading} cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardBusy={cardBusy} cardActionId={cardActionId} addCard={addCard} deleteCard={deleteCard} moveCard={moveCard} openCard={openCard} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
+  return <main className="app-shell"><Sidebar activeView={activeView} setActiveView={setActiveView} cardsCount={cards.length} transactionsCount={allTransactions.length} email={session.user.email} signOut={signOut} /><section className="content-shell">
+    {activeView === 'cards' ? <CardsView cards={cards} cardsLoading={cardsLoading} cardName={cardName} setCardName={setCardName} cardColor={cardColor} setCardColor={setCardColor} cardBusy={cardBusy} cardActionId={cardActionId} addCard={addCard} deleteCard={deleteCard} moveCard={moveCard} openCard={openCard} /> : activeView === 'transactions' ? <TransactionsView transactions={allTransactions} cards={cards} loading={allTransactionsLoading} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} /> : <DashboardView session={session} protectedCheck={protectedCheck} protectedBusy={protectedBusy} result={result} />}
     {notice && <Notice notice={notice} />}
-  </section>{selectedCard && <CardDetailModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} saveCardColor={saveCardColor} colorBusy={colorBusy} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} />}</main>
+  </section>{selectedCard && <CardDetailModal card={selectedCard} selectedCardColor={selectedCardColor} setSelectedCardColor={setSelectedCardColor} saveCardColor={saveCardColor} colorBusy={colorBusy} closeCard={closeCard} transactions={transactions} transactionsLoading={transactionsLoading} transactionForm={transactionForm} changeTransaction={changeTransaction} addTransaction={addTransaction} transactionBusy={transactionBusy} openEditTransaction={openEditTransaction} deleteTransaction={deleteTransaction} />}{editingTransaction && <TransactionEditModal transaction={editingTransaction} form={editTransactionForm} changeForm={changeEditTransaction} save={saveTransaction} remove={deleteTransaction} busy={editBusy} close={() => setEditingTransaction(null)} />}</main>
 }
 
-function Sidebar({ activeView, setActiveView, cardsCount, email, signOut }) {
-  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><nav className="side-nav" aria-label="Main navigation"><button className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</button><button className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</button></nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><button className="nav-signout" onClick={signOut}>Sign out</button></div></aside>
+function Sidebar({ activeView, setActiveView, cardsCount, transactionsCount, email, signOut }) {
+  return <aside className="sidebar"><div className="sidebar-brand"><div className="brand-mark">BN</div><span>Budget Nerd</span></div><nav className="side-nav" aria-label="Main navigation"><button className={activeView === 'dashboard' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('dashboard')}><span>⌂</span>Dashboard</button><button className={activeView === 'cards' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('cards')}><span>▣</span>Cards{cardsCount > 0 && <strong className="nav-count">{cardsCount}</strong>}</button><button className={activeView === 'transactions' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveView('transactions')}><span>↔</span>Transactions{transactionsCount > 0 && <strong className="nav-count">{transactionsCount}</strong>}</button></nav><div className="sidebar-footer"><p className="sidebar-email" title={email}>{email}</p><button className="nav-signout" onClick={signOut}>Sign out</button></div></aside>
 }
 
 function DashboardView({ session, protectedCheck, protectedBusy, result }) {
@@ -266,11 +321,21 @@ function ColorPicker({ label, value, onChange }) {
   return <div className="color-picker"><span className="field-label">{label}</span><div className="color-options" role="radiogroup" aria-label={label}>{CARD_COLORS.map((color) => <button type="button" key={color.value} className={value === color.value ? 'color-swatch selected' : 'color-swatch'} style={{ background: color.value }} title={color.name} aria-label={color.name} aria-checked={value === color.value} role="radio" onClick={() => onChange(color.value)}><span>{value === color.value ? '✓' : ''}</span></button>)}</div></div>
 }
 
-function CardDetailModal({ card, selectedCardColor, setSelectedCardColor, saveCardColor, colorBusy, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy }) {
-  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeCard() }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="card-detail-title"><div className="modal-header"><div><p className="eyebrow">Card workspace</p><h2 id="card-detail-title">{card.name}</h2></div><button type="button" className="close-button" onClick={closeCard} aria-label="Close card workspace">×</button></div><div className="detail-columns"><div><div className="detail-preview" style={{ '--card-color': selectedCardColor }}><div className="card-chip" /><span>{card.name}</span><div className="card-placeholder">••••  ••••  ••••  ••••</div></div><div className="detail-section"><h3>Card color</h3><ColorPicker label="Choose a color" value={selectedCardColor} onChange={setSelectedCardColor} /><button type="button" className="secondary-button save-color-button" onClick={saveCardColor} disabled={colorBusy}>{colorBusy ? 'Saving...' : 'Save color'}</button></div></div><div className="transaction-column"><div className="detail-section"><p className="eyebrow">New transaction</p><h3>Add a transaction</h3><form className="transaction-form" onSubmit={addTransaction}><div className="transaction-types" role="radiogroup" aria-label="Transaction type">{TRANSACTION_TYPES.map((type) => <button type="button" key={type.value} className={transactionForm.type === type.value ? 'transaction-type selected' : 'transaction-type'} aria-pressed={transactionForm.type === type.value} onClick={() => changeTransaction({ target: { name: 'type', value: type.value } })}><span>{type.emoji}</span><small>{type.label}</small></button>)}</div><label htmlFor="transaction-name">Name</label><input id="transaction-name" name="name" value={transactionForm.name} onChange={changeTransaction} placeholder="e.g. Supermarket" maxLength={120} required /><div className="form-row"><div><label htmlFor="transaction-date">Date</label><input id="transaction-date" name="date" type="date" value={transactionForm.date} onChange={changeTransaction} required /></div><div><label htmlFor="transaction-amount">Dollar value</label><div className="amount-input"><span>$</span><input id="transaction-amount" name="amount" type="number" min="0" step="0.01" value={transactionForm.amount} onChange={changeTransaction} placeholder="0.00" required /></div></div></div><label htmlFor="statement-month">Statement month</label><input id="statement-month" name="statementMonth" type="month" value={transactionForm.statementMonth} onChange={changeTransaction} required /><button className="primary-button" disabled={transactionBusy}>{transactionBusy ? 'Saving...' : 'Add transaction'}</button></form></div></div></div><div className="transaction-history"><div className="history-heading"><h3>Recent transactions</h3><span>{transactions.length}</span></div>{transactionsLoading ? <p className="muted">Loading transactions...</p> : transactions.length === 0 ? <p className="muted">No transactions for this card yet.</p> : <div className="transaction-list">{transactions.map((transaction) => <div className="transaction-row" key={transaction.id}><span className="transaction-emoji">{transactionType(transaction.type).emoji}</span><div className="transaction-meta"><strong>{transaction.name}</strong><small>{transactionType(transaction.type).label} · {formatDate(transaction.transaction_date)} · Statement {formatMonth(transaction.statement_month)}</small></div><strong className="transaction-amount">$ {Number(transaction.amount).toFixed(2)}</strong></div>)}</div>}</div></section></div>
+function CardDetailModal({ card, selectedCardColor, setSelectedCardColor, saveCardColor, colorBusy, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, openEditTransaction, deleteTransaction }) {
+  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeCard() }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="card-detail-title"><div className="modal-header"><div><p className="eyebrow">Card workspace</p><h2 id="card-detail-title">{card.name}</h2></div><button type="button" className="close-button" onClick={closeCard} aria-label="Close card workspace">×</button></div><div className="detail-columns"><div><div className="detail-preview" style={{ '--card-color': selectedCardColor }}><div className="card-chip" /><span>{card.name}</span><div className="card-placeholder">••••  ••••  ••••  ••••</div></div><div className="detail-section"><h3>Card color</h3><ColorPicker label="Choose a color" value={selectedCardColor} onChange={setSelectedCardColor} /><button type="button" className="secondary-button save-color-button" onClick={saveCardColor} disabled={colorBusy}>{colorBusy ? 'Saving...' : 'Save color'}</button></div></div><div className="transaction-column"><div className="detail-section"><p className="eyebrow">New transaction</p><h3>Add a transaction</h3><form className="transaction-form" onSubmit={addTransaction}><div className="transaction-types" role="radiogroup" aria-label="Transaction type">{TRANSACTION_TYPES.map((type) => <button type="button" key={type.value} className={transactionForm.type === type.value ? 'transaction-type selected' : 'transaction-type'} aria-pressed={transactionForm.type === type.value} onClick={() => changeTransaction({ target: { name: 'type', value: type.value } })}><span>{type.emoji}</span><small>{type.label}</small></button>)}</div><label htmlFor="transaction-name">Name</label><input id="transaction-name" name="name" value={transactionForm.name} onChange={changeTransaction} placeholder="e.g. Supermarket" maxLength={120} required /><div className="form-row"><div><label htmlFor="transaction-date">Date</label><input id="transaction-date" name="date" type="date" value={transactionForm.date} onChange={changeTransaction} required /></div><div><label htmlFor="transaction-amount">Dollar value</label><div className="amount-input"><span>$</span><input id="transaction-amount" name="amount" type="number" step="0.01" value={transactionForm.amount} onChange={changeTransaction} placeholder="0.00" required /></div></div></div><label htmlFor="statement-month">Statement month</label><input id="statement-month" name="statementMonth" type="month" value={transactionForm.statementMonth} onChange={changeTransaction} required /><button className="primary-button" disabled={transactionBusy}>{transactionBusy ? 'Saving...' : 'Add transaction'}</button></form></div></div></div><div className="transaction-history"><div className="history-heading"><h3>Recent transactions</h3><span>{transactions.length}</span></div>{transactionsLoading ? <p className="muted">Loading transactions...</p> : transactions.length === 0 ? <p className="muted">No transactions for this card yet.</p> : <div className="transaction-list">{transactions.map((transaction) => <div className="transaction-row" key={transaction.id}><span className="transaction-emoji">{transactionType(transaction.type).emoji}</span><div className="transaction-meta"><strong>{transaction.name}</strong><small>{transactionType(transaction.type).label} · {formatDate(transaction.transaction_date)} · Statement {formatMonth(transaction.statement_month)}</small></div><strong className="transaction-amount">{formatAmount(transaction.amount)}</strong><div className="transaction-row-actions"><button type="button" onClick={() => openEditTransaction(transaction)}>Edit</button><button type="button" onClick={() => deleteTransaction(transaction)}>Delete</button></div></div>)}</div>}</div></section></div>
+}
+
+function TransactionsView({ transactions, cards, loading, openEditTransaction, deleteTransaction }) {
+  const cardNames = new Map(cards.map((card) => [card.id, card.name]))
+  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Activity</p><h1>Transactions</h1><p className="muted">Review and edit transactions across all of your credit cards.</p></div></div><section className="content-card transactions-page"><div className="history-heading"><h3>All transactions</h3><span>{transactions.length}</span></div>{loading ? <p className="muted">Loading transactions...</p> : transactions.length === 0 ? <div className="empty-state compact"><div className="empty-icon">↔</div><h2>No transactions yet</h2><p className="muted">Add a transaction from a card workspace to see it here.</p></div> : <div className="transaction-list full-list">{transactions.map((transaction) => <div className="transaction-row" key={transaction.id}><span className="transaction-emoji">{transactionType(transaction.type).emoji}</span><div className="transaction-meta"><strong>{transaction.name}</strong><small>{cardNames.get(transaction.card_id) || 'Unknown card'} · {transactionType(transaction.type).label} · {formatDate(transaction.transaction_date)} · Statement {formatMonth(transaction.statement_month)}</small></div><strong className="transaction-amount">{formatAmount(transaction.amount)}</strong><div className="transaction-row-actions"><button type="button" onClick={() => openEditTransaction(transaction)}>Edit</button><button type="button" onClick={() => deleteTransaction(transaction)}>Delete</button></div></div>)}</div>}</section></div>
+}
+
+function TransactionEditModal({ transaction, form, changeForm, save, remove, busy, close }) {
+  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}><section className="modal-card edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-transaction-title"><div className="modal-header"><div><p className="eyebrow">Edit transaction</p><h2 id="edit-transaction-title">{transaction.name}</h2></div><button type="button" className="close-button" onClick={close} aria-label="Close edit transaction">×</button></div><form className="transaction-form" onSubmit={save}><div className="transaction-types" role="radiogroup" aria-label="Transaction type">{TRANSACTION_TYPES.map((type) => <button type="button" key={type.value} className={form.type === type.value ? 'transaction-type selected' : 'transaction-type'} aria-pressed={form.type === type.value} onClick={() => changeForm({ target: { name: 'type', value: type.value } })}><span>{type.emoji}</span><small>{type.label}</small></button>)}</div><label htmlFor="edit-transaction-name">Name</label><input id="edit-transaction-name" name="name" value={form.name} onChange={changeForm} maxLength={120} required /><div className="form-row"><div><label htmlFor="edit-transaction-date">Date</label><input id="edit-transaction-date" name="date" type="date" value={form.date} onChange={changeForm} required /></div><div><label htmlFor="edit-transaction-amount">Dollar value</label><div className="amount-input"><span>$</span><input id="edit-transaction-amount" name="amount" type="number" step="0.01" value={form.amount} onChange={changeForm} required /></div></div></div><label htmlFor="edit-statement-month">Statement month</label><input id="edit-statement-month" name="statementMonth" type="month" value={form.statementMonth} onChange={changeForm} required /><div className="edit-actions"><button type="button" className="danger-button" onClick={() => remove(transaction)}>Delete</button><button className="primary-button" disabled={busy}>{busy ? 'Saving...' : 'Save changes'}</button></div></form></section></div>
 }
 
 function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
+function formatAmount(value) { const amount = Number(value); return amount < 0 ? '-$ ' + Math.abs(amount).toFixed(2) : '$ ' + amount.toFixed(2) }
 function Notice({ notice }) { return <p className={'notice ' + notice.type} role="status">{notice.text}</p> }
