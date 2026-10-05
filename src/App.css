@@ -112,3 +112,6 @@
 @media(max-width:560px){.account-workspace-header{align-items:stretch;flex-direction:column}.account-workspace-header .d-flex{flex-direction:column}.account-workspace-header .btn{width:100%}}
 
 .account-card.selected{border:2px solid #3958d5;box-shadow:0 0 0 4px rgba(57,88,213,.14),0 16px 35px rgba(36,53,87,.14)}
+
+.card-payment-planner{display:grid;gap:.75rem;margin-bottom:1.25rem;padding:1rem;border:1px solid #dce3ef;border-radius:12px;background:#f6f8fd}.card-payment-planner>div:first-child{display:grid;gap:.2rem}.card-payment-planner small{color:#647089}.card-payment-controls{display:flex;align-items:center;gap:.75rem}.card-payment-controls .form-select{flex:1}.card-payment-controls .btn{white-space:nowrap}
+@media(max-width:560px){.card-payment-controls{align-items:stretch;flex-direction:column}.card-payment-controls .btn{width:100%}}
