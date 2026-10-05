@@ -123,3 +123,8 @@
 .ledger-date-groups{display:grid;gap:1rem}.ledger-date-group h4{margin:0;padding:.2rem .15rem;color:#647089;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.ledger-date-group .transaction-list{gap:.4rem}.ledger-row{border-left:4px solid #d6ddea}.ledger-row.planned{border-left-color:#3958d5;background:#eef1ff}.ledger-row.realized{border-left-color:#2bb673;background:#e9f8f0}.ledger-row.mixed{border-left-color:#d97706;background:#fff7e6}.ledger-row.planned .ledger-amounts{color:#3958d5}.ledger-row.realized .ledger-amounts{color:#176a49}.ledger-row.mixed .ledger-amounts{color:#a85b00}
 
 .ledger-balance-after{margin-top:.15rem;color:#172033;font-weight:750}
+
+.plan-page-layout{display:grid;grid-template-columns:minmax(270px,.65fr) minmax(620px,1.35fr);align-items:start;gap:1.5rem}.plan-accounts-column{min-width:0}.plan-accounts-column .page-heading{align-items:flex-start;display:grid;gap:1rem}.plan-accounts-column .page-heading .btn{justify-self:start}.plan-accounts-column .account-grid{grid-template-columns:1fr}.plan-ledger-column{min-width:0}.plan-ledger-column .plan-account-workspace{margin:0;min-height:calc(100vh - 7rem)}.plan-empty-selection{display:grid;min-height:300px;place-items:center;padding:3rem 1.5rem;text-align:center}.plan-empty-selection .empty-icon{margin:0 auto 1rem}
+@media(max-width:1200px){.plan-page-layout{grid-template-columns:minmax(250px,.75fr) minmax(540px,1.25fr)}}
+@media(max-width:900px){.plan-page-layout{grid-template-columns:1fr}.plan-ledger-column .plan-account-workspace{min-height:0}.plan-accounts-column .account-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.plan-accounts-column .account-grid{grid-template-columns:1fr}}
