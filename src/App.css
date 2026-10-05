@@ -97,3 +97,5 @@
 @media(max-width:560px){.month-picker-control{height:40px;min-height:40px}}
 
 .react-datepicker__month-container{width:300px;min-width:300px}.react-datepicker__month-text,.react-datepicker__year-text{box-sizing:border-box;width:88px;min-width:88px;margin:4px;padding:9px 4px;font-size:.8rem;line-height:20px;white-space:nowrap;overflow:visible}
+
+.activity-filter-total{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1rem 0;padding:.8rem 1rem;border:1px solid #dce3ef;border-radius:10px;color:#647089;background:#f6f8fd}.activity-filter-total strong{color:#3958d5;font-size:1.1rem}
