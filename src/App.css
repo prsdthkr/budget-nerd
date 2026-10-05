@@ -107,3 +107,6 @@
 @media(max-width:560px){.account-grid{grid-template-columns:1fr}.account-modal-summary{grid-template-columns:1fr}.plan-month-toolbar{align-items:stretch;flex-direction:column}.plan-month-toolbar .react-datepicker-wrapper{width:100%}.plan-month-toolbar .btn{width:100%}.ledger-row{grid-template-columns:1fr}.ledger-amounts{text-align:left}.ledger-row .transaction-row-actions{margin-left:0}}
 
 .plan-add-account-trigger{height:38px;min-height:0;padding:.375rem .75rem;white-space:nowrap}.account-modal-toolbar{display:flex;justify-content:flex-end;margin-bottom:.75rem}
+
+.plan-account-workspace{padding:1.25rem}.account-workspace-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}.account-workspace-header h2{margin-bottom:.25rem}.account-workspace-header p{margin-bottom:0}.plan-account-workspace>.alert{margin-bottom:1rem}.plan-account-workspace .account-modal-summary{margin-bottom:1rem}.plan-account-workspace .plan-ledger-layout{margin-top:.5rem}
+@media(max-width:560px){.account-workspace-header{align-items:stretch;flex-direction:column}.account-workspace-header .d-flex{flex-direction:column}.account-workspace-header .btn{width:100%}}
