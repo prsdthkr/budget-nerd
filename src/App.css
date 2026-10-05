@@ -35,3 +35,5 @@
 .add-card-trigger{min-height:44px;padding:.7rem 1.1rem;white-space:nowrap}
 
 .add-card-trigger{height:38px;min-height:0;padding:.375rem .75rem;line-height:1.5}
+
+.credit-card.card{min-height:220px}.card-modal-preview.card{cursor:default}.card-modal-preview.card:hover{transform:none;box-shadow:0 14px 28px color-mix(in srgb,var(--card-color) 28%,transparent)}
