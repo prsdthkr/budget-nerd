@@ -1,6 +1,6 @@
 # Budget Nerd
 
-A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, card colors, transactions, and Vercel deployment support.
+A React + Vite budget workspace with Supabase email/password authentication, Row Level Security, user-owned credit cards, card colors, transaction management, and Vercel deployment support.
 
 ## Local setup
 
@@ -18,7 +18,7 @@ The existing project already has the authentication, profiles, pings, and credit
 
     supabase/migrations/20261005_card_colors_and_transactions.sql
 
-It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache.
+It adds the color column to credit_cards and creates card_transactions with RLS. Because automatic table exposure is disabled, expose public.card_transactions in the Data API settings after running the migration. The migration reloads the PostgREST schema cache. Then run supabase/migrations/20261005_allow_negative_transactions.sql to permit negative amounts for cashback and refunds.
 
 For a brand-new Supabase project, run supabase/schema.sql instead.
 
@@ -32,6 +32,9 @@ The Cards section supports:
 - Emoji-based transaction types: Subscription, Grocery, Shopping, Misc, Travel, Food, and Remit.
 - Transaction name, date, dollar value, and statement month/year.
 - Viewing recent transactions for each card.
+- A Transactions side navigation page showing all transactions across cards.
+- Editing or deleting existing transactions.
+- Negative transaction amounts for credits such as cashback and refunds.
 - Persistent card reordering and deletion.
 
 Only the card name, selected color, and transaction fields entered by the user are stored. The app does not store card numbers, CVVs, expiration dates, or payment credentials.
