@@ -34,6 +34,7 @@ create table if not exists public.bank_accounts (
   routing_number text not null,
   starting_balance numeric(12, 2) not null default 0,
   minimum_balance numeric(12, 2) not null default 0 check (minimum_balance >= 0),
+  currency text not null default 'USD' check (currency in ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY', 'CHF', 'SGD')),
   created_at timestamptz not null default now()
 );
 
