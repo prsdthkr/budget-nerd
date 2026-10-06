@@ -195,3 +195,6 @@
 @media(max-width:700px){.cashflow-summary{align-items:flex-start;flex-direction:column}.cashflow-chart{height:520px;padding:.25rem}}
 
 .ledger-row.amount-positive{border-left-color:var(--bs-success)!important}.ledger-row.amount-negative{border-left-color:var(--bs-danger)!important}.ledger-row.amount-neutral{border-left-color:var(--bs-border-color)!important}.ledger-balance-divider.negative{color:var(--bs-danger)!important}
+
+.ledger-filters{display:grid;grid-template-columns:minmax(120px,1fr) auto auto;align-items:center;gap:.6rem;margin-bottom:1rem}.ledger-filters .btn-group .btn{white-space:nowrap}
+@media(max-width:700px){.ledger-filters{grid-template-columns:1fr}.ledger-filters .btn-group{width:100%}.ledger-filters .btn-group .btn{flex:1}}
