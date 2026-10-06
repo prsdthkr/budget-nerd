@@ -320,7 +320,8 @@ export default function App() {
 
   const loadActivityTransactions = async (filters = activityFilters) => {
     setActivityLoading(true)
-    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(10)
+    const hasFilters = Object.values(filters).some(Boolean)
+    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     if (filters.name.trim()) query = query.ilike('name', '%' + filters.name.trim() + '%')
     if (filters.amount !== '') {
       const amount = Number(filters.amount)
@@ -332,6 +333,7 @@ export default function App() {
     if (filters.cashflowMonth) query = query.eq('cashflow_month', filters.cashflowMonth + '-01')
     if (filters.cardId) query = query.eq('card_id', filters.cardId)
     if (filters.category) query = query.eq('type', filters.category)
+    if (!hasFilters) query = query.limit(10)
     const response = await query
     setActivityLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
