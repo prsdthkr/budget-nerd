@@ -164,3 +164,5 @@
 .nav-tabs{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:flex-end}.nav-tabs .nav-item{display:block;width:auto!important;min-width:0;padding:0;border:0;border-radius:0;color:inherit;background:transparent;text-align:initial;font-weight:inherit}.nav-tabs .nav-link{display:block;width:auto!important}
 
 .ledger-row.realized{background-color:var(--bs-secondary-bg);border-left-color:var(--bs-secondary-color)}.ledger-row.planned{background-color:transparent;border-left-color:var(--bs-border-color)}.ledger-row.mixed{background-color:var(--bs-tertiary-bg);border-left-color:var(--bs-warning)}
+
+.ledger-row .ledger-amounts,.ledger-row.planned .ledger-amounts,.ledger-row.realized .ledger-amounts,.ledger-row.mixed .ledger-amounts{color:var(--bs-secondary-color)}
