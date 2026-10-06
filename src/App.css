@@ -225,3 +225,5 @@
 @media(max-width:700px){.ledger-toolbar-actions{align-items:stretch;flex-direction:column}.ledger-toolbar-actions .form-select,.ledger-toolbar-actions .btn{width:100%}}
 
 .react-datepicker__year-dropdown-container,.react-datepicker__month-dropdown-container,.react-datepicker__year-dropdown-container--select,.react-datepicker__month-dropdown-container--select{color:var(--bs-body-color)!important}.react-datepicker__year-dropdown .react-datepicker__year-option,.react-datepicker__month-dropdown .react-datepicker__month-option{color:var(--bs-body-color)!important;background:var(--bs-body-bg)!important}
+
+.inline-ledger-amount{cursor:ew-resize}.inline-ledger-amount:hover{text-decoration:underline;text-underline-offset:3px}.inline-ledger-input{width:125px;min-width:0}
