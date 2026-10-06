@@ -855,39 +855,7 @@ function formatIsoMonth(value) { return value ? value.getFullYear() + '-' + Stri
 function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
-function formatPlainAmount(value) { const amount = Number(value || 0); return (amount < 0 ? '-(currency, value) {
-  const code = currency || 'USD'
-  const amount = Number(value || 0)
-  const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).formatToParts(amount)
-  return <>{parts.map((part, index) => part.type === 'currency' ? <span className="currency-symbol" key={index}>{part.value}</span> : <span key={index}>{part.value}</span>)}</>
-}
-function currencySymbol(currency) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((part) => part.type === 'currency')?.value || currency || 'USD'
-}
-function formatAmount(value) { const amount = Number(value); return <><span className="currency-symbol">{amount < 0 ? '-$' : '$'}</span>{Math.abs(amount).toFixed(2)}</> }
-function Notice({ notice }) {
-  const [show, setShow] = useState(true)
-  useEffect(() => setShow(true), [notice])
-  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
-  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
-}
- : '(currency, value) {
-  const code = currency || 'USD'
-  const amount = Number(value || 0)
-  const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).formatToParts(amount)
-  return <>{parts.map((part, index) => part.type === 'currency' ? <span className="currency-symbol" key={index}>{part.value}</span> : <span key={index}>{part.value}</span>)}</>
-}
-function currencySymbol(currency) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((part) => part.type === 'currency')?.value || currency || 'USD'
-}
-function formatAmount(value) { const amount = Number(value); return <><span className="currency-symbol">{amount < 0 ? '-$' : '$'}</span>{Math.abs(amount).toFixed(2)}</> }
-function Notice({ notice }) {
-  const [show, setShow] = useState(true)
-  useEffect(() => setShow(true), [notice])
-  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
-  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
-}
-) + Math.abs(amount).toFixed(2) }
+function formatPlainAmount(value) { const amount = Number(value || 0); return (amount < 0 ? '-$' : '$') + Math.abs(amount).toFixed(2) }
 function formatAccountAmount(currency, value) {
   const code = currency || 'USD'
   const amount = Number(value || 0)
