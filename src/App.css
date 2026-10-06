@@ -159,3 +159,6 @@
 @media(max-width:1100px){.cards-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:850px){.cards-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.cards-grid{grid-template-columns:1fr}}
+
+/* Prevent sidebar nav-item rules from affecting Bootstrap Tabs. */
+.nav-tabs{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:flex-end}.nav-tabs .nav-item{display:block;width:auto!important;min-width:0;padding:0;border:0;border-radius:0;color:inherit;background:transparent;text-align:initial;font-weight:inherit}.nav-tabs .nav-link{display:block;width:auto!important}
