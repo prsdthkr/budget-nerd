@@ -176,3 +176,5 @@
 .status-toast-container{position:fixed!important;top:0;right:0;z-index:2000!important}
 
 .react-datepicker__month-text:hover,.react-datepicker__year-text:hover{color:var(--bs-body-color)!important;background-color:var(--bs-primary-bg-subtle)!important}.react-datepicker__month-text--selected,.react-datepicker__year-text--selected{color:var(--bs-body-bg)!important;background-color:var(--bs-primary)!important}
+
+.tab-content{padding-top:1rem}
