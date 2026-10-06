@@ -341,9 +341,10 @@ export default function App() {
     if (!ids.length) return
     setNotice(null)
     const response = await supabase.from('card_transactions').update(changes).in('id', ids)
-    if (response.error) return setNotice({ type: 'error', text: response.error.message })
+    if (response.error) { setNotice({ type: 'error', text: response.error.message }); return false }
     await Promise.all([loadActivityTransactions(), loadAllTransactions(), loadBankData()])
     setNotice({ type: 'success', text: ids.length + ' transaction' + (ids.length === 1 ? '' : 's') + ' updated.' })
+    return true
   }
 
   const loadCategoryLimits = async () => {
