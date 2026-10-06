@@ -13,11 +13,12 @@ import Tab from 'react-bootstrap/Tab'
 import Tabs from 'react-bootstrap/Tabs'
 import Toast from 'react-bootstrap/Toast'
 import ToastContainer from 'react-bootstrap/ToastContainer'
+import { ResponsiveSankey } from '@nivo/sankey'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import DatePicker from 'react-datepicker'
 
 const blank = { email: '', password: '' }
-const VIEW_PATHS = { dashboard: '/dashboard', cards: '/cards', transactions: '/transactions', spend: '/spend', plan: '/plan' }
+const VIEW_PATHS = { dashboard: '/dashboard', cards: '/cards', transactions: '/transactions', spend: '/spend', plan: '/plan', cashflow: '/cashflow' }
 const PATH_VIEWS = Object.fromEntries(Object.entries(VIEW_PATHS).map(([view, path]) => [path, view]))
 
 const ACCOUNT_CURRENCIES = [
@@ -27,7 +28,7 @@ const ACCOUNT_CURRENCIES = [
 ]
 
 
-const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth })
+const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
 
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
@@ -53,6 +54,7 @@ const TRANSACTION_TYPES = [
 
 
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
+const CASHFLOW_MONTHS = 12
 const blankActivityFilters = { name: '', amount: '', dateFrom: '', dateTo: '', statementMonth: '', cardId: '', category: '' }
 const defaultLedgerForm = (accountId = '') => ({ accountId, description: '', date: new Date().toISOString().slice(0, 10), realizedAmount: '', plannedAmount: '', recurring: false })
 export default function App() {
