@@ -15,7 +15,8 @@
     "bootstrap": "^5.3.8",
     "react-bootstrap": "^2.10.10",
     "react-bootstrap-typeahead": "^6.4.1",
-    "react-datepicker": "^8.7.0"
+    "react-datepicker": "^8.7.0",
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Alert from 'react-bootstrap/Alert'
 import Button from 'react-bootstrap/Button'
@@ -16,6 +17,9 @@ import { Typeahead } from 'react-bootstrap-typeahead'
 import DatePicker from 'react-datepicker'
 
 const blank = { email: '', password: '' }
+const VIEW_PATHS = { dashboard: '/dashboard', cards: '/cards', transactions: '/transactions', spend: '/spend', plan: '/plan' }
+const PATH_VIEWS = Object.fromEntries(Object.entries(VIEW_PATHS).map(([view, path]) => [path, view]))
+
 const ACCOUNT_CURRENCIES = [
   { code: 'USD', label: 'US Dollar' }, { code: 'EUR', label: 'Euro' }, { code: 'GBP', label: 'British Pound' },
   { code: 'CAD', label: 'Canadian Dollar' }, { code: 'AUD', label: 'Australian Dollar' }, { code: 'INR', label: 'Indian Rupee' },
@@ -58,7 +62,10 @@ export default function App() {
   const [credentials, setCredentials] = useState(blank)
   const [busy, setBusy] = useState(false)
   const [protectedBusy, setProtectedBusy] = useState(false)
-  const [activeView, setActiveView] = useState('cards')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activeView = PATH_VIEWS[location.pathname] || 'cards'
+  const setActiveView = (view) => navigate(VIEW_PATHS[view] || VIEW_PATHS.cards)
   const [notice, setNotice] = useState(null)
   const [result, setResult] = useState(null)
   const [cards, setCards] = useState([])
@@ -118,6 +125,10 @@ export default function App() {
   const selectedCard = cards.find((card) => card.id === selectedCardId) || null
   const transactionSuggestions = [...new Set(allTransactions.filter((transaction) => transaction.type === transactionForm.type).map((transaction) => transaction.name))]
   const editTransactionSuggestions = [...new Set(allTransactions.filter((transaction) => transaction.type === editTransactionForm.type).map((transaction) => transaction.name))]
+
+  useEffect(() => {
+    if (!PATH_VIEWS[location.pathname]) navigate(VIEW_PATHS.cards, { replace: true })
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     let mounted = true
