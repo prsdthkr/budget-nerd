@@ -96,3 +96,8 @@ Before running it:
 4. The site will be available at https://prsdthkr.github.io/budget-nerd/.
 
 GitHub Pages uses hash routing for reliable refreshes on application pages. Add https://prsdthkr.github.io/budget-nerd/ to Supabase Authentication -> URL Configuration.
+
+
+## Cashflow
+
+Cashflow is a month-selectable Sankey view. Transactions default to the current calendar month but can be cleared or assigned to another cashflow month; ledger entries are optional and blank by default. Run supabase/migrations/20261005_cashflow_months.sql and supabase/migrations/20261005_cashflow_month_optional.sql for the fields.
