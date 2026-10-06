@@ -44,6 +44,7 @@ create table if not exists public.account_ledger_items (
   account_id uuid not null references public.bank_accounts(id) on delete cascade,
   description text not null default '',
   ledger_date date not null default current_date,
+  cashflow_month date,
   realized_amount numeric(12, 2) not null default 0,
   planned_amount numeric(12, 2) not null default 0,
   recurring boolean not null default false,
@@ -77,6 +78,7 @@ create table if not exists public.card_transactions (
   transaction_date date not null default current_date,
   amount numeric(12, 2) not null,
   statement_month date not null check (statement_month = date_trunc('month', statement_month)::date),
+  cashflow_month date not null default date_trunc('month', current_date)::date check (cashflow_month = date_trunc('month', cashflow_month)::date),
   created_at timestamptz not null default now()
 );
 
