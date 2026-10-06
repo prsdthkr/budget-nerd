@@ -20,7 +20,7 @@ const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
   { name: 'Emerald', value: '#059669' }, { name: 'Lime', value: '#65a30d' }, { name: 'Amber', value: '#d97706' }, { name: 'Gold', value: '#b8860b' },
   { name: 'Orange', value: '#ea580c' }, { name: 'Rose', value: '#e11d48' }, { name: 'Pink', value: '#db2777' },
-  { name: 'Violet', value: '#7c3aed' }, { name: 'Indigo', value: '#4f46e5' }, { name: 'Slate', value: '#475569' },
+  { name: 'Violet', value: '#7c3aed' }, { name: 'Indigo', value: '#4f46e5' }, { name: 'Slate', value: '#475569' }, { name: 'White', value: '#ffffff' },
 ]
 
 const TRANSACTION_TYPES = [
@@ -634,8 +634,10 @@ function CreditCardView({ card, statementSummary, openCard }) {
 }
 
 function CreditCardVisual({ card, statementSummary, onClick, className = '' }) {
+  const color = card.color || CARD_COLORS[0].value
+  const isLight = color.toLowerCase() === '#ffffff'
   const interactiveProps = onClick ? { onClick, onKeyDown: (event) => { if (event.key === 'Enter' || event.key === ' ') onClick() }, role: 'button', tabIndex: 0 } : {}
-  return <Card className={'credit-card ' + className} style={{ '--card-color': card.color || CARD_COLORS[0].value }} {...interactiveProps}><Card.Body><div className="card-chip" /><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
+  return <Card className={'credit-card ' + className} style={{ '--card-color': color, '--card-end-color': isLight ? '#e2e8f0' : '#172033', '--card-foreground': isLight ? '#172033' : '#ffffff', '--card-muted': isLight ? '#526079' : 'rgba(255,255,255,.72)' }} {...interactiveProps}><Card.Body><div className="card-chip" /><Card.Title>{card.name}</Card.Title><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
 }
 
 function orderCardsByStatementDate(cards) {
