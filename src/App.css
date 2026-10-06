@@ -172,3 +172,5 @@
 .ledger-row.below-minimum{background-color:var(--bs-danger-bg-subtle);border-left-color:var(--bs-danger)}.ledger-row.below-minimum .ledger-amounts,.ledger-row.below-minimum .ledger-balance-after{color:var(--bs-danger-text-emphasis)}
 
 .currency-symbol{margin-right:.08em;color:var(--bs-secondary-color);font-size:.72em;font-weight:400}
+
+.status-toast-container{position:fixed!important;top:0;right:0;z-index:2000!important}
