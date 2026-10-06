@@ -223,3 +223,5 @@
 
 .ledger-toolbar-actions{display:flex;align-items:center;gap:.5rem}.ledger-toolbar-actions .form-select{width:auto;min-width:130px}.ledger-row{padding:.55rem .65rem;gap:.55rem}.ledger-row-main{gap:.1rem}.ledger-amounts{gap:.1rem}.ledger-amounts strong{font-size:1.15rem;line-height:1.2}.ledger-balance-divider{padding:.2rem .65rem .3rem;font-size:.72rem}.ledger-date-groups{gap:.7rem}.ledger-date-group h4{font-size:.72rem;margin-bottom:.25rem}
 @media(max-width:700px){.ledger-toolbar-actions{align-items:stretch;flex-direction:column}.ledger-toolbar-actions .form-select,.ledger-toolbar-actions .btn{width:100%}}
+
+.react-datepicker__year-dropdown-container,.react-datepicker__month-dropdown-container,.react-datepicker__year-dropdown-container--select,.react-datepicker__month-dropdown-container--select{color:var(--bs-body-color)!important}.react-datepicker__year-dropdown .react-datepicker__year-option,.react-datepicker__month-dropdown .react-datepicker__month-option{color:var(--bs-body-color)!important;background:var(--bs-body-bg)!important}
