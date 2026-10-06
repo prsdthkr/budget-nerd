@@ -19,7 +19,7 @@ create table if not exists public.credit_cards (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   name text not null check (char_length(btrim(name)) between 1 and 80),
   color text not null default '#2563eb',
-  default_category text not null default 'misc' check (default_category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car')),
+  default_category text not null default 'misc' check (default_category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
   statement_day smallint null check (statement_day is null or statement_day between 1 and 31),
   default_statement_month date null check (default_statement_month is null or default_statement_month = date_trunc('month', default_statement_month)::date),
   sort_order integer not null default 0,
@@ -61,7 +61,7 @@ create unique index if not exists account_ledger_card_payment_unique_idx on publ
 
 create table if not exists public.category_limits (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  category text not null check (category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car')),
+  category text not null check (category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
   limit_amount numeric(12, 2) not null default 1000 check (limit_amount >= 0),
   created_at timestamptz not null default now(),
   primary key (user_id, category)
@@ -71,7 +71,7 @@ create table if not exists public.card_transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   card_id uuid not null references public.credit_cards(id) on delete cascade,
-  type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car')),
+  type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
   name text not null check (char_length(btrim(name)) between 1 and 120),
   transaction_date date not null default current_date,
   amount numeric(12, 2) not null,
