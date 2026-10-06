@@ -190,3 +190,6 @@
 /* Keep primary application pages on the same centered content width. */
 .content-shell{width:60%;max-width:none;margin-inline:auto}
 @media(max-width:1000px){.content-shell{width:100%;margin-inline:0}}
+
+.cashflow-summary{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem}.cashflow-summary strong{font-size:1.2rem}.cashflow-summary span{color:var(--bs-secondary-color)}.cashflow-chart{height:600px;min-height:500px;padding:1rem}.cashflow-chart svg{max-width:100%}
+@media(max-width:700px){.cashflow-summary{align-items:flex-start;flex-direction:column}.cashflow-chart{height:520px;padding:.25rem}}
