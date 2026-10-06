@@ -137,3 +137,5 @@
 @media(max-width:900px){.plan-account-workspace{grid-template-columns:1fr}}
 
 .plan-content-shell{width:100%;max-width:none}
+
+.ledger-opening-balance{margin-bottom:.75rem;padding:.65rem .8rem;border-radius:8px;color:#526079;background:#eef1f6;font-size:.82rem;font-weight:750}.ledger-item-sequence+.ledger-item-sequence{margin-top:.25rem}.ledger-balance-divider{padding:.3rem .75rem .45rem;color:#3958d5;font-size:.78rem;font-weight:800;text-align:right}
