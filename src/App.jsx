@@ -678,10 +678,12 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
   transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).forEach((transaction) => { const category = transactionType(transaction.type).emoji + ' ' + transactionType(transaction.type).label; const amount = Number(transaction.amount || 0); if (amount >= 0) addLink('Cashflow', 'Out: ' + category, amount); else addLink('In: ' + category, 'Cashflow', amount) })
   ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).forEach((item) => { const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); const accountName = accountNames.get(item.account_id) || 'Bank account'; const label = accountName + ' · ' + (item.description || 'Ledger item'); if (amount >= 0) addLink('In: ' + label, 'Cashflow', amount); else addLink('Cashflow', 'Out: ' + label, amount) })
   const links = [...linksByKey.entries()].map(([key, value]) => { const [source, target] = key.split('::'); return { source, target, value } })
-  const nodes = [...new Set(links.flatMap((link) => [link.source, link.target]))].map((id) => ({ id }))
+  const incomingTotal = links.filter((link) => link.target === 'Cashflow').reduce((sum, link) => sum + link.value, 0)
+  const outgoingTotal = links.filter((link) => link.source === 'Cashflow').reduce((sum, link) => sum + link.value, 0)
+  const nodes = [...new Set(links.flatMap((link) => [link.source, link.target]))].map((id) => { const incoming = id.startsWith('In: '); const outgoing = id.startsWith('Out: '); const total = incoming ? links.filter((link) => link.source === id).reduce((sum, link) => sum + link.value, 0) : outgoing ? links.filter((link) => link.target === id).reduce((sum, link) => sum + link.value, 0) : 0; const baseLabel = id.replace(/^(In|Out): /, ''); const percentage = incoming ? incomingTotal > 0 ? Math.round((total / incomingTotal) * 100) : 0 : outgoing ? outgoingTotal > 0 ? Math.round((total / outgoingTotal) * 100) : 0 : 0; return { id, label: id === 'Cashflow' ? 'Cashflow' : baseLabel + ' · ' + formatPlainAmount(total) + ' (' + percentage + '%)' } })
   const monthName = parseMonth(month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   const sankeyData = { nodes, links }
-  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Money movement</p><h1>Cashflow</h1><p className="muted">Visualize transactions and ledger entries assigned to a cashflow month.</p></div><DatePicker selected={parseMonth(month)} onChange={(date) => { if (date) setMonth(formatIsoMonth(date)) }} showMonthYearPicker showFullMonthYearPicker dateFormat="MMM yyyy" customInput={<Form.Control className="month-picker-control" />} /></div><section className="content-card cashflow-summary"><strong>{monthName}</strong><span>{links.length ? 'Flow diagram' : 'No cashflow items assigned'}</span></section>{links.length === 0 ? <section className="empty-state"><div className="empty-icon">⌁</div><h2>No cashflow data</h2><p className="muted">Assign a cashflow month to transactions or ledger entries to include them here.</p></section> : <section className="content-card cashflow-chart"><ResponsiveSankey data={sankeyData} margin={{ top: 24, right: 180, bottom: 24, left: 180 }} align="justify" colors={{ scheme: 'category10' }} nodeOpacity={1} nodeHoverOthersOpacity={0.35} nodeThickness={18} nodeSpacing={18} nodeBorderWidth={0} labelPosition="outside" labelOrientation="horizontal" labelPadding={8} labelTextColor="var(--bs-body-color)" linkOpacity={0.35} linkHoverOthersOpacity={0.15} enableLinkGradient /></section>}<details className="cashflow-debug"><summary>Show Sankey data</summary><pre>{JSON.stringify({ month, nodes, links }, null, 2)}</pre></details></div>
+  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Money movement</p><h1>Cashflow</h1><p className="muted">Visualize transactions and ledger entries assigned to a cashflow month.</p></div><DatePicker selected={parseMonth(month)} onChange={(date) => { if (date) setMonth(formatIsoMonth(date)) }} showMonthYearPicker showFullMonthYearPicker dateFormat="MMM yyyy" customInput={<Form.Control className="month-picker-control" />} /></div><section className="content-card cashflow-summary"><strong>{monthName}</strong><span>{links.length ? formatPlainAmount(incomingTotal) + ' in · ' + formatPlainAmount(outgoingTotal) + ' out' : 'No cashflow items assigned'}</span></section>{links.length === 0 ? <section className="empty-state"><div className="empty-icon">⌁</div><h2>No cashflow data</h2><p className="muted">Assign a cashflow month to transactions or ledger entries to include them here.</p></section> : <section className="content-card cashflow-chart"><ResponsiveSankey data={sankeyData} margin={{ top: 24, right: 180, bottom: 24, left: 180 }} align="justify" colors={{ scheme: 'category10' }} nodeOpacity={1} nodeHoverOthersOpacity={0.35} nodeThickness={18} nodeSpacing={18} nodeBorderWidth={0} nodeLabel="label" labelPosition="outside" labelOrientation="horizontal" labelPadding={8} labelTextColor="var(--bs-body-color)" linkColor="source" linkOpacity={0.65} linkHoverOthersOpacity={0.15} enableLinkGradient nodeTooltip={({ node }) => <div className="cashflow-tooltip"><strong>{node.label}</strong><span>{formatPlainAmount(node.value)}</span></div>} linkTooltip={({ link }) => <div className="cashflow-tooltip"><strong>{link.source.id} → {link.target.id}</strong><span>{formatPlainAmount(link.value)}</span></div>} /></section>}<details className="cashflow-debug"><summary>Show Sankey data</summary><pre>{JSON.stringify({ month, nodes, links }, null, 2)}</pre></details></div>
 }
 
 function SpendView({ transactions, limits, month, setMonth, loading, openLimits }) {
@@ -853,6 +855,39 @@ function formatIsoMonth(value) { return value ? value.getFullYear() + '-' + Stri
 function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
+function formatPlainAmount(value) { const amount = Number(value || 0); return (amount < 0 ? '-(currency, value) {
+  const code = currency || 'USD'
+  const amount = Number(value || 0)
+  const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).formatToParts(amount)
+  return <>{parts.map((part, index) => part.type === 'currency' ? <span className="currency-symbol" key={index}>{part.value}</span> : <span key={index}>{part.value}</span>)}</>
+}
+function currencySymbol(currency) {
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((part) => part.type === 'currency')?.value || currency || 'USD'
+}
+function formatAmount(value) { const amount = Number(value); return <><span className="currency-symbol">{amount < 0 ? '-$' : '$'}</span>{Math.abs(amount).toFixed(2)}</> }
+function Notice({ notice }) {
+  const [show, setShow] = useState(true)
+  useEffect(() => setShow(true), [notice])
+  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+}
+ : '(currency, value) {
+  const code = currency || 'USD'
+  const amount = Number(value || 0)
+  const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).formatToParts(amount)
+  return <>{parts.map((part, index) => part.type === 'currency' ? <span className="currency-symbol" key={index}>{part.value}</span> : <span key={index}>{part.value}</span>)}</>
+}
+function currencySymbol(currency) {
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((part) => part.type === 'currency')?.value || currency || 'USD'
+}
+function formatAmount(value) { const amount = Number(value); return <><span className="currency-symbol">{amount < 0 ? '-$' : '$'}</span>{Math.abs(amount).toFixed(2)}</> }
+function Notice({ notice }) {
+  const [show, setShow] = useState(true)
+  useEffect(() => setShow(true), [notice])
+  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+}
+) + Math.abs(amount).toFixed(2) }
 function formatAccountAmount(currency, value) {
   const code = currency || 'USD'
   const amount = Number(value || 0)
