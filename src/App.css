@@ -178,3 +178,5 @@
 .react-datepicker__month-text:hover,.react-datepicker__year-text:hover{color:var(--bs-body-color)!important;background-color:var(--bs-primary-bg-subtle)!important}.react-datepicker__month-text--selected,.react-datepicker__year-text--selected{color:var(--bs-body-bg)!important;background-color:var(--bs-primary)!important}
 
 .tab-content{padding-top:1rem}
+
+.react-datepicker__day:hover{color:var(--bs-body-color)!important;background-color:var(--bs-primary-bg-subtle)!important}.react-datepicker__day--selected,.react-datepicker__day--keyboard-selected{color:var(--bs-body-bg)!important;background-color:var(--bs-primary)!important}.react-datepicker__day--today{color:var(--bs-primary-text-emphasis)!important;font-weight:700}
