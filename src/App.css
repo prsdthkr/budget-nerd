@@ -139,3 +139,6 @@
 .plan-content-shell{width:100%;max-width:none}
 
 .ledger-opening-balance{margin-bottom:.75rem;padding:.65rem .8rem;border-radius:8px;color:#526079;background:#eef1f6;font-size:.82rem;font-weight:750}.ledger-item-sequence+.ledger-item-sequence{margin-top:.25rem}.ledger-balance-divider{padding:.3rem .75rem .45rem;color:#3958d5;font-size:.78rem;font-weight:800;text-align:right}
+
+.account-workspace-tabs,.account-workspace-tabs.nav-tabs{display:flex!important;align-items:flex-end;flex-wrap:wrap;gap:.35rem;width:100%;border-bottom:1px solid #dce3ef}.account-workspace-tabs .nav-item{display:block;width:auto;padding:0;border:0;background:transparent}.account-workspace-tabs .nav-link{display:block;width:auto;margin-bottom:-1px;padding:.7rem 1rem;border:0;border-bottom:2px solid transparent;border-radius:.5rem .5rem 0 0;color:#647089;background:transparent;font-weight:750}.account-workspace-tabs .nav-link:hover{color:#3958d5;background:#f6f8fd}.account-workspace-tabs .nav-link.active{border-bottom-color:#3958d5;color:#3958d5;background:#fff}.account-workspace-tabs+.tab-content{padding-top:1.25rem}.account-workspace-tabs+.tab-content>.tab-pane{min-height:0}
+@media(max-width:560px){.account-workspace-tabs{gap:.1rem}.account-workspace-tabs .nav-link{padding:.6rem .7rem;font-size:.85rem}}
