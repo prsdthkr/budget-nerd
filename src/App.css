@@ -135,3 +135,5 @@
 
 .account-selector{display:flex;align-items:center;gap:.5rem;max-width:100%;overflow-x:auto;padding:.45rem;border:1px solid #e5eaf2;border-radius:10px;background:#f6f8fd}.account-selector-tab{min-height:34px;padding:.3rem .8rem;border:0;border-radius:7px;white-space:nowrap;font-size:.85rem;font-weight:700}.account-selector-tab.active{color:#fff;background:#3958d5}.account-selector-tab:not(.active){color:#526079;background:transparent}.account-selector-tab:not(.active):hover{color:#3958d5;background:#e5eaff}.plan-account-workspace{grid-template-columns:minmax(0,3fr) minmax(0,7fr)}
 @media(max-width:900px){.plan-account-workspace{grid-template-columns:1fr}}
+
+.plan-content-shell{width:100%;max-width:none}
