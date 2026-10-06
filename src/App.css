@@ -166,3 +166,5 @@
 .ledger-row.realized{background-color:var(--bs-secondary-bg);border-left-color:var(--bs-secondary-color)}.ledger-row.planned{background-color:transparent;border-left-color:var(--bs-border-color)}.ledger-row.mixed{background-color:var(--bs-tertiary-bg);border-left-color:var(--bs-warning)}
 
 .ledger-row .ledger-amounts,.ledger-row.planned .ledger-amounts,.ledger-row.realized .ledger-amounts,.ledger-row.mixed .ledger-amounts{color:var(--bs-secondary-color)}
+
+.ledger-amounts strong{font-size:1rem;font-weight:750;color:var(--bs-secondary-color)}
