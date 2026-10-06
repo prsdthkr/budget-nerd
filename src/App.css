@@ -186,3 +186,7 @@
 
 .plan-content-shell{width:60%;max-width:none;margin-inline:auto}
 @media(max-width:1000px){.plan-content-shell{width:100%;margin-inline:0}}
+
+/* Keep primary application pages on the same centered content width. */
+.content-shell{width:60%;max-width:none;margin-inline:auto}
+@media(max-width:1000px){.content-shell{width:100%;margin-inline:0}}
