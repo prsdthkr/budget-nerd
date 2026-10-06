@@ -82,3 +82,17 @@ Plan contains user-scoped bank accounts with masked account display, current bal
 
 
 Planned credit-card payments are linked to a card and statement month. Their planned ledger amount is automatically synchronized to the negative sum of that statement's transactions. Select a bank account in the Statement transactions tab to create or move the planned payment. The card-transaction sync migration is supabase/migrations/20261005_card_payment_ledger_links.sql.
+
+
+## GitHub Pages deployment
+
+This repository includes .github/workflows/deploy-pages.yml for an additional GitHub Actions deployment. Vercel remains configured independently.
+
+Before running it:
+
+1. In GitHub, open Settings -> Pages and set the source to GitHub Actions.
+2. In Settings -> Secrets and variables -> Actions, add repository variable VITE_SUPABASE_URL and repository secret VITE_SUPABASE_ANON_KEY.
+3. Push to main or run the Deploy Vite app to GitHub Pages workflow manually.
+4. The site will be available at https://prsdthkr.github.io/budget-nerd/.
+
+GitHub Pages uses hash routing for reliable refreshes on application pages. Add https://prsdthkr.github.io/budget-nerd/ to Supabase Authentication -> URL Configuration.
