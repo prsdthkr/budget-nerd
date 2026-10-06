@@ -10,6 +10,8 @@ import Modal from 'react-bootstrap/Modal'
 import ProgressBar from 'react-bootstrap/ProgressBar'
 import Tab from 'react-bootstrap/Tab'
 import Tabs from 'react-bootstrap/Tabs'
+import Toast from 'react-bootstrap/Toast'
+import ToastContainer from 'react-bootstrap/ToastContainer'
 import { Typeahead } from 'react-bootstrap-typeahead'
 import DatePicker from 'react-datepicker'
 
@@ -766,4 +768,7 @@ function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.v
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
 function formatAmount(value) { const amount = Number(value); return amount < 0 ? '-$ ' + Math.abs(amount).toFixed(2) : '$ ' + amount.toFixed(2) }
-function Notice({ notice }) { return <Alert variant={notice.type === 'error' ? 'danger' : 'success'} className="notice" role="status">{notice.text}</Alert> }
+function Notice({ notice }) {
+  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+}
