@@ -183,3 +183,6 @@
 
 .plan-account-workspace{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 @media(max-width:900px){.plan-account-workspace{grid-template-columns:1fr}}
+
+.plan-content-shell{width:60%;max-width:none;margin-inline:auto}
+@media(max-width:1000px){.plan-content-shell{width:100%;margin-inline:0}}
