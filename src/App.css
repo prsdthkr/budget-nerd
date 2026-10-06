@@ -168,3 +168,5 @@
 .ledger-row .ledger-amounts,.ledger-row.planned .ledger-amounts,.ledger-row.realized .ledger-amounts,.ledger-row.mixed .ledger-amounts{color:var(--bs-secondary-color)}
 
 .ledger-amounts strong{font-size:1rem;font-weight:750;color:var(--bs-secondary-color)}
+
+.ledger-row.below-minimum{background-color:var(--bs-danger-bg-subtle);border-left-color:var(--bs-danger)}.ledger-row.below-minimum .ledger-amounts,.ledger-row.below-minimum .ledger-balance-after{color:var(--bs-danger-text-emphasis)}
