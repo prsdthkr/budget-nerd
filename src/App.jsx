@@ -767,7 +767,17 @@ function formatIsoMonth(value) { return value ? value.getFullYear() + '-' + Stri
 function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
-function formatAmount(value) { const amount = Number(value); return amount < 0 ? '-$ ' + Math.abs(amount).toFixed(2) : '$ ' + amount.toFixed(2) }
+function formatAmount(value) { const amount = Number(value); return <><span className="currency-symbol">{amount < 0 ? '-
+function Notice({ notice }) {
+  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+}
+ : '
+function Notice({ notice }) {
+  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+}
+}</span>{Math.abs(amount).toFixed(2)}</> }
 function Notice({ notice }) {
   if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
   return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
