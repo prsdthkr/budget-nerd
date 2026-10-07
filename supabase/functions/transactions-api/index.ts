@@ -16,7 +16,7 @@ function validDate(value: unknown) { return typeof value === 'string' && /^\\d{4
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (request.method !== 'POST') return json({ error: 'POST required.' }, 405)
-  const rawKey = request.headers.get('X-API-Key') || (request.headers.get('Authorization') || '').replace(/^Bearer\\s+/i, '')
+  const rawKey = request.headers.get('X-API-Key') || (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
   if (!rawKey.startsWith('bn_live_')) return json({ error: 'A valid API key is required.' }, 401)
   const client = admin()
   const { data: keyRecord } = await client.from('user_api_keys').select('id, user_id').eq('key_hash', await hashKey(rawKey)).is('revoked_at', null).maybeSingle()

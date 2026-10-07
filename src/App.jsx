@@ -746,6 +746,7 @@ function SettingsView() {
 
   const request = async (method, body) => {
     const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('Please sign in again before managing API keys.')
     const response = await fetch(endpoint, { method, headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
     const result = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(result.error || 'API key request failed.')

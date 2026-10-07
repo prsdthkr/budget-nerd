@@ -6,9 +6,10 @@ const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SE
 
 async function getUser(request: Request) {
   const authorization = request.headers.get('Authorization') || ''
-  const token = authorization.replace(/^Bearer\\s+/i, '')
+  const token = authorization.replace(/^Bearer\s+/i, '')
   if (!token) return null
-  const { data } = await admin().auth.getUser(token)
+  const authClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: 'Bearer ' + token } } })
+  const { data } = await authClient.auth.getUser()
   return data.user || null
 }
 
