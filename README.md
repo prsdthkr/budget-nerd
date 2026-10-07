@@ -101,3 +101,27 @@ GitHub Pages uses hash routing for reliable refreshes on application pages. Add 
 ## Cashflow
 
 Cashflow is a month-selectable Sankey view. Transactions default to the current calendar month but can be cleared or assigned to another cashflow month; ledger entries are optional and blank by default. Run supabase/migrations/20261005_cashflow_months.sql and supabase/migrations/20261005_cashflow_month_optional.sql for the fields.
+
+
+## Transaction ingestion API
+
+The Settings page creates write-only API keys for transaction imports. Keys are hashed by the api-keys Supabase Edge Function and shown only once. The transactions-api function accepts one transaction or up to 1,000 transactions in a JSON array.
+
+Deploy the functions with the Supabase CLI:
+
+    supabase functions deploy api-keys
+    supabase functions deploy transactions-api --no-verify-jwt
+    supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+The API key migration is:
+
+    supabase/migrations/20261005_user_api_keys.sql
+
+Example request:
+
+    curl -X POST "https://PROJECT_REF.supabase.co/functions/v1/transactions-api" \\
+      -H "Authorization: Bearer bn_live_your_key" \\
+      -H "Content-Type: application/json" \\
+      -d '{"card_name":"Everyday Rewards","type":"grocery","name":"Market","date":"2026-10-06","amount":42.50}'
+
+For bulk import, send {"transactions":[...]} with up to 1,000 entries. The API is intentionally write-only: it cannot read, update, or delete transactions.
