@@ -723,8 +723,8 @@ function BankAccountWorkspace({ accounts, account, ledger, month, setMonth, open
 function InlineLedgerAmount({ item, field, currency, editing, setEditing, update }) {
   const isEditing = editing?.id === item.id && editing?.field === field
   const value = item[field]
-  const save = async () => { const success = await update(item, field, editing.value); if (success) setEditing(null) }
-  if (isEditing) return <Form.Control className={field === 'realized_amount' ? 'inline-ledger-input realized-ledger-amount' : 'inline-ledger-input planned-ledger-amount'} size="sm" type="number" step="0.01" autoFocus value={editing.value} onChange={(event) => setEditing((current) => ({ ...current, value: event.target.value }))} onBlur={save} onKeyDown={(event) => { if (event.key === 'Enter') save(); if (event.key === 'Escape') setEditing(null) }} />
+  const save = async (nextValue) => { const success = await update(item, field, nextValue ?? editing?.value ?? ''); if (success) setEditing(null) }
+  if (isEditing) return <Form.Control className={field === 'realized_amount' ? 'inline-ledger-input realized-ledger-amount' : 'inline-ledger-input planned-ledger-amount'} size="sm" type="number" step="0.01" autoFocus value={editing.value} onChange={(event) => setEditing((current) => ({ ...current, value: event.target.value }))} onBlur={(event) => save(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); save(event.currentTarget.value) } if (event.key === 'Escape') setEditing(null) }} />
   return <strong className={field === 'realized_amount' ? 'inline-ledger-amount realized-ledger-amount' : 'inline-ledger-amount planned-ledger-amount'} title="Double-click to edit" onDoubleClick={() => setEditing({ id: item.id, field, value: String(value ?? 0) })}>{formatAccountAmount(currency, value)}</strong>
 }
 
