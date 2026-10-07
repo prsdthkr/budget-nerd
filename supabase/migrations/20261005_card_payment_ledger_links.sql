@@ -41,7 +41,8 @@ begin
       where card_id = target_card_id and statement_month = target_statement_month;
       update public.account_ledger_items
       set planned_amount = -statement_total
-      where source_type = 'card_payment' and card_id = target_card_id and statement_month = target_statement_month;
+      where source_type = 'card_payment' and card_id = target_card_id and statement_month = target_statement_month
+        and not (realized_amount <> 0 and planned_amount = 0);
     end if;
   end if;
   if (TG_OP = 'INSERT' or TG_OP = 'UPDATE') then

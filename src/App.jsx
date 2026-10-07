@@ -277,7 +277,6 @@ export default function App() {
   const changeLedgerForm = ({ target }) => setLedgerForm((current) => ({ ...current, [target.name]: target.type === 'checkbox' ? target.checked : target.value }))
   const swapLedgerAmounts = () => setLedgerForm((current) => ({ ...current, realizedAmount: current.plannedAmount, plannedAmount: current.realizedAmount }))
   const swapLedgerItemAmounts = async (item) => {
-    if (item.source_type === 'card_payment') { setNotice({ type: 'error', text: 'Card payment amounts are calculated from statement transactions.' }); return false }
     const response = await supabase.from('account_ledger_items').update({ realized_amount: Number(item.planned_amount || 0), planned_amount: Number(item.realized_amount || 0) }).eq('id', item.id).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
     if (response.error) { setNotice({ type: 'error', text: response.error.message }); return false }
     setBankLedger((current) => current.map((entry) => entry.id === item.id ? response.data : entry))
