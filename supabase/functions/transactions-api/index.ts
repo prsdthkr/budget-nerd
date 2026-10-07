@@ -1,0 +1,57 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-api-key' }
+const TYPES = new Set(['subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities'])
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+
+async function hashKey(value: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function monthForDate(value: string) { return value.slice(0, 7) + '-01' }
+function validDate(value: unknown) { return typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) }
+
+Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (request.method !== 'POST') return json({ error: 'POST required.' }, 405)
+  const rawKey = request.headers.get('X-API-Key') || (request.headers.get('Authorization') || '').replace(/^Bearer\\s+/i, '')
+  if (!rawKey.startsWith('bn_live_')) return json({ error: 'A valid API key is required.' }, 401)
+  const client = admin()
+  const { data: keyRecord } = await client.from('user_api_keys').select('id, user_id').eq('key_hash', await hashKey(rawKey)).is('revoked_at', null).maybeSingle()
+  if (!keyRecord) return json({ error: 'Invalid or revoked API key.' }, 401)
+
+  const body = await request.json().catch(() => null)
+  const entries = Array.isArray(body) ? body : Array.isArray(body?.transactions) ? body.transactions : [body]
+  if (!entries.length || entries.length > 1000) return json({ error: 'Send between 1 and 1000 transactions.' }, 400)
+  const rows = []
+  for (const entry of entries) {
+    const name = String(entry?.name || '').trim()
+    const type = String(entry?.type || '').toLowerCase()
+    const transactionDate = entry?.transaction_date || entry?.date
+    const amount = Number(entry?.amount)
+    if (!name || name.length > 120) return json({ error: 'Each transaction needs a name between 1 and 120 characters.' }, 400)
+    if (!TYPES.has(type)) return json({ error: 'Unsupported transaction type: ' + type }, 400)
+    if (!validDate(transactionDate)) return json({ error: 'Each transaction needs transaction_date in YYYY-MM-DD format.' }, 400)
+    if (!Number.isFinite(amount)) return json({ error: 'Each transaction needs a numeric amount.' }, 400)
+    const statementMonth = entry?.statement_month || monthForDate(transactionDate)
+    const cashflowMonth = entry?.cashflow_month === null ? null : (entry?.cashflow_month || monthForDate(transactionDate))
+    if (cashflowMonth && !/^\\d{4}-\\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
+    if (!/^\\d{4}-\\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
+    let cardId = entry?.card_id
+    if (!cardId && entry?.card_name) {
+      const { data: cards } = await client.from('credit_cards').select('id, name').eq('user_id', keyRecord.user_id).ilike('name', String(entry.card_name))
+      if (cards?.length !== 1) return json({ error: 'card_name must match exactly one card.' }, 400)
+      cardId = cards[0].id
+    }
+    if (!cardId) return json({ error: 'Each transaction needs card_id or card_name.' }, 400)
+    const { data: card } = await client.from('credit_cards').select('id').eq('id', cardId).eq('user_id', keyRecord.user_id).maybeSingle()
+    if (!card) return json({ error: 'Card not found for this API key owner.' }, 400)
+    rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth })
+  }
+  const { data, error } = await client.from('card_transactions').insert(rows).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at')
+  if (error) return json({ error: error.message }, 500)
+  await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
+  return json({ inserted: data?.length || 0, transactions: data || [] }, 201)
+})
