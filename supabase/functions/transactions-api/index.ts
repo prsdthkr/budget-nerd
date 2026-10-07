@@ -39,8 +39,8 @@ Deno.serve(async (request) => {
     if (!Number.isFinite(amount)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_amount' }); return json({ error: 'Each transaction needs a numeric amount.' }, 400) }
     const statementMonth = entry?.statement_month || monthForDate(transactionDate)
     const cashflowMonth = entry?.cashflow_month === null ? null : (entry?.cashflow_month || monthForDate(transactionDate))
-    if (cashflowMonth && !/^\d{4}-\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
-    if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
+    if (cashflowMonth && !/^\\d{4}-\\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
+    if (!/^\\d{4}-\\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
     let cardId = entry?.card_id
     if (!cardId && entry?.card_name) {
       const { data: cards } = await client.from('credit_cards').select('id, name').eq('user_id', keyRecord.user_id).ilike('name', String(entry.card_name))
@@ -52,9 +52,23 @@ Deno.serve(async (request) => {
     if (!card) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'card_not_owned' }); return json({ error: 'Card not found for this API key owner.' }, 400) }
     rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth })
   }
-  const { data, error } = await client.from('card_transactions').insert(rows).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at')
-  if (error) { log('insert_failed', { user_id: keyRecord.user_id, count: rows.length, error: error.message }); return json({ error: error.message }, 500) }
-  log('transactions_inserted', { user_id: keyRecord.user_id, count: data?.length || 0 })
+
+  const duplicateKey = (name, date, amount) => name.trim().toLowerCase() + '|' + date + '|' + Number(amount).toFixed(2)
+  const dates = [...new Set(rows.map((row) => row.transaction_date))]
+  const { data: existingRows, error: existingError } = dates.length ? await client.from('card_transactions').select('name, transaction_date, amount').eq('user_id', keyRecord.user_id).in('transaction_date', dates) : { data: [], error: null }
+  if (existingError) { log('duplicate_check_failed', { user_id: keyRecord.user_id, error: existingError.message }); return json({ error: existingError.message }, 500) }
+  const existingKeys = new Set((existingRows || []).map((row) => duplicateKey(row.name, row.transaction_date, row.amount)))
+  const seenKeys = new Set()
+  const rowsToInsert = rows.filter((row) => { const key = duplicateKey(row.name, row.transaction_date, row.amount); if (existingKeys.has(key) || seenKeys.has(key)) return false; seenKeys.add(key); return true })
+  const skipped = rows.length - rowsToInsert.length
+  if (!rowsToInsert.length) {
+    await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
+    log('transactions_skipped_as_duplicates', { user_id: keyRecord.user_id, skipped })
+    return json({ inserted: 0, skipped, transactions: [] }, 200)
+  }
+  const { data, error } = await client.from('card_transactions').insert(rowsToInsert).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at')
+  if (error) { log('insert_failed', { user_id: keyRecord.user_id, count: rowsToInsert.length, error: error.message }); return json({ error: error.message }, 500) }
+  log('transactions_inserted', { user_id: keyRecord.user_id, inserted: data?.length || 0, skipped })
   await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
   return json({ inserted: data?.length || 0, transactions: data || [] }, 201)
 })
