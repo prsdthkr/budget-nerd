@@ -39,8 +39,8 @@ Deno.serve(async (request) => {
     if (!Number.isFinite(amount)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_amount' }); return json({ error: 'Each transaction needs a numeric amount.' }, 400) }
     const statementMonth = entry?.statement_month || monthForDate(transactionDate)
     const cashflowMonth = entry?.cashflow_month === null ? null : (entry?.cashflow_month || monthForDate(transactionDate))
-    if (cashflowMonth && !/^\\d{4}-\\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
-    if (!/^\\d{4}-\\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
+    if (cashflowMonth && !/^\d{4}-\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
+    if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
     let cardId = entry?.card_id
     if (!cardId && entry?.card_name) {
       const { data: cards } = await client.from('credit_cards').select('id, name').eq('user_id', keyRecord.user_id).ilike('name', String(entry.card_name))
