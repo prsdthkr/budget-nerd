@@ -77,6 +77,7 @@ export default function App() {
   const [cardColor, setCardColor] = useState(CARD_COLORS[0].value)
   const [cardDefaultCategory, setCardDefaultCategory] = useState('misc')
   const [cardStatementDay, setCardStatementDay] = useState('')
+  const [cardDueDay, setCardDueDay] = useState('')
   const [addCardOpen, setAddCardOpen] = useState(false)
   const [preferencesOpen, setPreferencesOpen] = useState(false)
   const [cardBusy, setCardBusy] = useState(false)
@@ -88,6 +89,7 @@ export default function App() {
   const [selectedCardColor, setSelectedCardColor] = useState(CARD_COLORS[0].value)
   const [selectedCardDefaultCategory, setSelectedCardDefaultCategory] = useState('misc')
   const [selectedCardStatementDay, setSelectedCardStatementDay] = useState('')
+  const [selectedCardDueDay, setSelectedCardDueDay] = useState('')
   const [selectedCardDefaultStatementMonth, setSelectedCardDefaultStatementMonth] = useState('')
   const [defaultMonthBusy, setDefaultMonthBusy] = useState(false)
   const [transactions, setTransactions] = useState([])
@@ -840,7 +842,7 @@ function CreditCardVisual({ card, statementSummary, onClick, className = '' }) {
   const color = card.color || CARD_COLORS[0].value
   const isLight = color.toLowerCase() === '#ffffff'
   const interactiveProps = onClick ? { onClick, onKeyDown: (event) => { if (event.key === 'Enter' || event.key === ' ') onClick() }, role: 'button', tabIndex: 0 } : {}
-  return <Card className={'credit-card ' + className} style={{ '--card-color': color, '--card-end-color': isLight ? '#e2e8f0' : '#172033', '--card-foreground': isLight ? '#172033' : '#ffffff', '--card-muted': isLight ? '#526079' : 'rgba(255,255,255,.72)' }} {...interactiveProps}><Card.Body><div className="card-heading-inline"><div className="card-chip" /><Card.Title>{card.name}</Card.Title></div><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}{statementSummary.statementAvailable && !statementSummary.paymentPaid && <span className="statement-available-dot" title="Statement may be available and is not marked paid" aria-label="Statement may be available and is not marked paid" />}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
+  return <Card className={'credit-card ' + className} style={{ '--card-color': color, '--card-end-color': isLight ? '#e2e8f0' : '#172033', '--card-foreground': isLight ? '#172033' : '#ffffff', '--card-muted': isLight ? '#526079' : 'rgba(255,255,255,.72)' }} {...interactiveProps}><Card.Body><div className="card-heading-inline"><div className="card-chip" /><Card.Title>{card.name}</Card.Title></div><div className="statement-summary"><strong>{formatStatementDate(statementSummary.currentDate)}{statementSummary.statementAvailable && !statementSummary.paymentPaid && statementSummary.dueDate && <span className="due-date-badge">{statementSummary.dueInDays < 0 ? 'Overdue by ' + Math.abs(statementSummary.dueInDays) + ' days' : 'Due in ' + statementSummary.dueInDays + ' days: ' + formatStatementDate(statementSummary.dueDate)}</span>}</strong><strong>{formatAmount(statementSummary.currentTotal)}</strong><strong>{formatStatementDate(statementSummary.nextDate)}</strong><strong>{formatAmount(statementSummary.nextTotal)}</strong></div></Card.Body></Card>
 }
 
 function orderCardsByStatementDate(cards) {
@@ -869,7 +871,16 @@ function statementSummary(card, transactions, ledger = []) {
   const paymentPaid = isPaid(anchorMonth)
   const currentTotal = totalForMonth(anchorMonth)
   const nextTotal = totalForMonth(nextMonth)
-  return { currentDate, currentTotal, nextDate, nextTotal, paymentPaid, statementAvailable: Boolean(card.statement_day && currentDate <= now && !paymentPaid && currentTotal !== 0) }
+  const dueDate = card.due_day && !paymentPaid ? dueDateForStatement(currentDate, card.due_day) : null
+  const dueInDays = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / 86400000) : null
+  return { currentDate, currentTotal, nextDate, nextTotal, paymentPaid, dueDate, dueInDays, statementAvailable: Boolean(card.statement_day && currentDate <= now && !paymentPaid && currentTotal !== 0) }
+}
+
+function dueDateForStatement(statementDate, dueDay) {
+  const day = Number(dueDay)
+  let dueDate = new Date(statementDate.getFullYear(), statementDate.getMonth(), Math.min(day, new Date(statementDate.getFullYear(), statementDate.getMonth() + 1, 0).getDate()))
+  if (dueDate <= statementDate) dueDate = new Date(statementDate.getFullYear(), statementDate.getMonth() + 1, Math.min(day, new Date(statementDate.getFullYear(), statementDate.getMonth() + 2, 0).getDate()))
+  return dueDate
 }
 
 function statementDateForMonth(date, statementDay) {
