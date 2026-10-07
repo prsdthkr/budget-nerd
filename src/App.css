@@ -235,3 +235,5 @@
 
 .settings-section{padding:1.25rem}.settings-section h2{margin-bottom:.5rem}.api-key-create-form{display:flex;gap:.75rem}.api-key-create-form .form-control{flex:1}.api-key-list{display:grid;gap:.5rem}.api-key-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem;border:1px solid var(--bs-border-color);border-radius:.5rem;background:var(--bs-tertiary-bg)}.api-key-row div{display:grid;gap:.2rem;min-width:0}.api-key-row small{color:var(--bs-secondary-color)}.api-example{overflow:auto;padding:1rem;border-radius:.5rem;color:var(--bs-body-color);background:var(--bs-tertiary-bg);font-size:.78rem;line-height:1.6}
 @media(max-width:560px){.api-key-create-form{align-items:stretch;flex-direction:column}.api-key-create-form .btn{width:100%}.api-key-row{align-items:flex-start;flex-direction:column}.api-key-row .btn{width:100%}}
+
+.settings-section{width:100%;min-width:0;max-width:100%;overflow:hidden}.settings-section .api-example{width:100%;max-width:100%;min-width:0;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}.settings-section .api-key-row{min-width:0;max-width:100%}
