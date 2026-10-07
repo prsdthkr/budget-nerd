@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-api-key' }
 const TYPES = new Set(['subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities'])
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!)
 
 async function hashKey(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
