@@ -239,3 +239,7 @@
 .settings-section{width:100%;min-width:0;max-width:100%;overflow:hidden}.settings-section .api-example{width:100%;max-width:100%;min-width:0;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}.settings-section .api-key-row{min-width:0;max-width:100%}
 
 .transactions-page .full-list{max-height:none;overflow:visible}
+
+.transaction-modal-dialog .recent-transactions-panel,.transaction-modal-dialog .statement-transaction-list{max-height:none;overflow:visible}.card-transaction-filters{grid-template-columns:repeat(5,minmax(0,1fr));gap:.75rem;margin-bottom:1rem}.card-transaction-filters .form-control,.card-transaction-filters .form-select{min-width:0}.statement-view{min-width:0}
+@media(max-width:950px){.card-transaction-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.card-transaction-filters{grid-template-columns:1fr}}
