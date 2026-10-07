@@ -21,7 +21,7 @@ async function hashKey(value: string) {
 function randomKey() {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)
-  const encoded = btoa(String.fromCharCode(...bytes)).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/g, '')
+  const encoded = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
   return 'bn_live_' + encoded
 }
 
