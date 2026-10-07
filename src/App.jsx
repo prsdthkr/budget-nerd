@@ -953,6 +953,5 @@ function formatAmount(value) { const amount = Number(value); return <><span clas
 function Notice({ notice }) {
   const [show, setShow] = useState(true)
   useEffect(() => setShow(true), [notice])
-  if (notice.type === 'error') return <Alert variant="danger" className="notice" role="alert">{notice.text}</Alert>
-  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg="success" autohide delay={4000} role="status"><Toast.Header closeButton><strong className="me-auto">Success</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
+  return <ToastContainer position="top-end" className="p-3 status-toast-container"><Toast show={show} onClose={() => setShow(false)} bg={notice.type === 'error' ? 'danger' : 'success'} autohide={notice.type !== 'error'} delay={4000} role={notice.type === 'error' ? 'alert' : 'status'}><Toast.Header closeButton><strong className="me-auto">{notice.type === 'error' ? 'Error' : 'Success'}</strong></Toast.Header><Toast.Body>{notice.text}</Toast.Body></Toast></ToastContainer>
 }
