@@ -247,3 +247,5 @@
 .transaction-list{width:100%;min-width:0}.transaction-row{width:100%;min-width:0;box-sizing:border-box;overflow:hidden}.transaction-row .transaction-meta{min-width:0;flex:1;overflow:hidden}.transaction-row .transaction-row-actions{flex:0 0 auto;white-space:nowrap}.transaction-modal-dialog .recent-transactions-panel,.transaction-modal-dialog .statement-transaction-list{width:100%;min-width:0}
 
 .transaction-history.recent-transactions-panel{height:auto!important;min-height:0;max-height:none!important;overflow:visible!important}
+
+.statement-available-dot{display:inline-block;width:.45rem;height:.45rem;margin-left:.35rem;vertical-align:middle;border-radius:50%;background:var(--bs-danger);box-shadow:0 0 0 .15rem color-mix(in srgb,var(--bs-danger) 20%,transparent)}
