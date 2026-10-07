@@ -249,3 +249,5 @@
 .transaction-history.recent-transactions-panel{height:auto!important;min-height:0;max-height:none!important;overflow:visible!important}
 
 .statement-available-dot{display:inline-block;width:.45rem;height:.45rem;margin-left:.35rem;vertical-align:middle;border-radius:50%;background:var(--bs-danger);box-shadow:0 0 0 .15rem color-mix(in srgb,var(--bs-danger) 20%,transparent)}
+
+@media(min-width:1001px){.content-shell,.plan-content-shell{width:80%}}
