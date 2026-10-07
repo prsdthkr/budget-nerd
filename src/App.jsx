@@ -851,13 +851,15 @@ function statementSummary(card, transactions, ledger = []) {
   const currentCalendarMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const paymentFor = (month) => ledger.find((item) => item.source_type === 'card_payment' && item.card_id === card.id && item.statement_month?.slice(0, 7) === formatIsoMonth(month))
   const isPaid = (month) => { const payment = paymentFor(month); return Boolean(payment && Number(payment.realized_amount || 0) !== 0 && Number(payment.planned_amount || 0) === 0) }
+  const totalForMonth = (date) => { const month = formatIsoMonth(date); return transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === month).reduce((total, transaction) => total + Number(transaction.amount || 0), 0) }
   const currentStatementDate = statementDateForMonth(currentCalendarMonth, card.statement_day)
-  const currentPaid = Boolean(card.statement_day && currentStatementDate <= now && isPaid(currentCalendarMonth))
+  const currentMonthTotal = totalForMonth(currentCalendarMonth)
+  const currentCleared = currentMonthTotal === 0 || isPaid(currentCalendarMonth)
+  const currentPaid = Boolean(card.statement_day && currentStatementDate <= now && currentCleared)
   const anchorMonth = currentPaid ? new Date(now.getFullYear(), now.getMonth() + 1, 1) : currentCalendarMonth
   const currentDate = statementDateForMonth(anchorMonth, card.statement_day)
   const nextMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + 1, 1)
   const nextDate = statementDateForMonth(nextMonth, card.statement_day)
-  const totalForMonth = (date) => { const month = formatIsoMonth(date); return transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === month).reduce((total, transaction) => total + Number(transaction.amount || 0), 0) }
   const paymentPaid = isPaid(anchorMonth)
   const currentTotal = totalForMonth(anchorMonth)
   const nextTotal = totalForMonth(nextMonth)
