@@ -848,14 +848,24 @@ function orderCardsByStatementDate(cards) {
 
 function statementSummary(card, transactions, ledger = []) {
   const now = new Date()
-  const currentDate = statementDateForMonth(now, card.statement_day)
-  const nextDate = statementDateForMonth(new Date(now.getFullYear(), now.getMonth() + 1, 1), card.statement_day)
-  const currentMonth = formatIsoMonth(currentDate)
-  const nextMonth = formatIsoMonth(nextDate)
-  const totalForMonth = (month) => transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === month).reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
-  const payment = ledger.find((item) => item.source_type === 'card_payment' && item.card_id === card.id && item.statement_month?.slice(0, 7) === currentMonth)
-  const paymentPaid = Boolean(payment && Number(payment.realized_amount || 0) !== 0 && Number(payment.planned_amount || 0) === 0)
-  return { currentDate, currentTotal: totalForMonth(currentMonth), nextDate, nextTotal: paymentPaid ? totalForMonth(nextMonth) : null, paymentPaid, statementAvailable: Boolean(card.statement_day && now >= currentDate) }
+  const currentCalendarMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const paymentFor = (month) => ledger.find((item) => item.source_type === 'card_payment' && item.card_id === card.id && item.statement_month?.slice(0, 7) === formatIsoMonth(month))
+  const isPaid = (month) => { const payment = paymentFor(month); return Boolean(payment && Number(payment.realized_amount || 0) !== 0 && Number(payment.planned_amount || 0) === 0) }
+  let anchorMonth = currentCalendarMonth
+  let unpaidStatementFound = false
+  for (let offset = 0; offset <= 12; offset += 1) {
+    const candidateMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() - offset, 1)
+    const candidateDate = statementDateForMonth(candidateMonth, card.statement_day)
+    if (candidateDate <= now && !isPaid(candidateMonth)) { anchorMonth = candidateMonth; unpaidStatementFound = true }
+  }
+  if (!unpaidStatementFound && statementDateForMonth(currentCalendarMonth, card.statement_day) <= now && isPaid(currentCalendarMonth)) anchorMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 1)
+  const currentDate = statementDateForMonth(anchorMonth, card.statement_day)
+  const nextMonth = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + 1, 1)
+  const nextDate = statementDateForMonth(nextMonth, card.statement_day)
+  const totalForMonth = (date) => { const month = formatIsoMonth(date); return transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === month).reduce((total, transaction) => total + Number(transaction.amount || 0), 0) }
+  const payment = paymentFor(anchorMonth)
+  const paymentPaid = isPaid(anchorMonth)
+  return { currentDate, currentTotal: totalForMonth(anchorMonth), nextDate, nextTotal: totalForMonth(nextMonth), paymentPaid, statementAvailable: Boolean(card.statement_day && currentDate <= now && !paymentPaid) }
 }
 
 function statementDateForMonth(date, statementDay) {
