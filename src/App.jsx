@@ -859,7 +859,9 @@ function statementSummary(card, transactions, ledger = []) {
   const nextDate = statementDateForMonth(nextMonth, card.statement_day)
   const totalForMonth = (date) => { const month = formatIsoMonth(date); return transactions.filter((transaction) => transaction.card_id === card.id && transaction.statement_month?.slice(0, 7) === month).reduce((total, transaction) => total + Number(transaction.amount || 0), 0) }
   const paymentPaid = isPaid(anchorMonth)
-  return { currentDate, currentTotal: totalForMonth(anchorMonth), nextDate, nextTotal: totalForMonth(nextMonth), paymentPaid, statementAvailable: Boolean(card.statement_day && currentDate <= now && !paymentPaid) }
+  const currentTotal = totalForMonth(anchorMonth)
+  const nextTotal = totalForMonth(nextMonth)
+  return { currentDate, currentTotal, nextDate, nextTotal, paymentPaid, statementAvailable: Boolean(card.statement_day && currentDate <= now && !paymentPaid && currentTotal !== 0) }
 }
 
 function statementDateForMonth(date, statementDay) {
