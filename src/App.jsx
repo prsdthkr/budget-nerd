@@ -838,12 +838,11 @@ function CreditCardVisual({ card, statementSummary, onClick, className = '' }) {
 }
 
 function orderCardsByStatementDate(cards) {
-  const now = new Date()
   return [...cards].sort((left, right) => {
     if (!left.statement_day && !right.statement_day) return (left.sort_order || 0) - (right.sort_order || 0)
     if (!left.statement_day) return 1
     if (!right.statement_day) return -1
-    return statementPeriods(left.statement_day, now).currentDate - statementPeriods(right.statement_day, now).currentDate
+    return Number(left.statement_day) - Number(right.statement_day)
   })
 }
 
