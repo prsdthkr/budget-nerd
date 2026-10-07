@@ -245,3 +245,5 @@
 @media(max-width:600px){.card-transaction-filters{grid-template-columns:1fr}}
 
 .transaction-list{width:100%;min-width:0}.transaction-row{width:100%;min-width:0;box-sizing:border-box;overflow:hidden}.transaction-row .transaction-meta{min-width:0;flex:1;overflow:hidden}.transaction-row .transaction-row-actions{flex:0 0 auto;white-space:nowrap}.transaction-modal-dialog .recent-transactions-panel,.transaction-modal-dialog .statement-transaction-list{width:100%;min-width:0;background:var(--bs-body-bg)!important}
+
+.transaction-history.recent-transactions-panel{height:auto!important;min-height:0;max-height:none!important;overflow:visible!important}
