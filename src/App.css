@@ -237,3 +237,5 @@
 @media(max-width:560px){.api-key-create-form{align-items:stretch;flex-direction:column}.api-key-create-form .btn{width:100%}.api-key-row{align-items:flex-start;flex-direction:column}.api-key-row .btn{width:100%}}
 
 .settings-section{width:100%;min-width:0;max-width:100%;overflow:hidden}.settings-section .api-example{width:100%;max-width:100%;min-width:0;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}.settings-section .api-key-row{min-width:0;max-width:100%}
+
+.transactions-page .full-list{max-height:none;overflow:visible}
