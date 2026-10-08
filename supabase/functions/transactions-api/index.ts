@@ -30,10 +30,12 @@ Deno.serve(async (request) => {
   const rows = []
   for (const [index, entry] of entries.entries()) {
     const name = String(entry?.name || '').trim()
+    const notes = String(entry?.notes || '').trim()
     const type = String(entry?.type || '').toLowerCase()
     const transactionDate = entry?.transaction_date || entry?.date
     const amount = Number(entry?.amount)
     if (!name || name.length > 120) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_name' }); return json({ error: 'Each transaction needs a name between 1 and 120 characters.' }, 400) }
+    if (notes.length > 500) return json({ error: 'Transaction notes cannot exceed 500 characters.' }, 400)
     if (!TYPES.has(type)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'unsupported_type', type }); return json({ error: 'Unsupported transaction type: ' + type }, 400) }
     if (!validDate(transactionDate)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_date' }); return json({ error: 'Each transaction needs transaction_date in YYYY-MM-DD format.' }, 400) }
     if (!Number.isFinite(amount)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_amount' }); return json({ error: 'Each transaction needs a numeric amount.' }, 400) }
@@ -50,7 +52,7 @@ Deno.serve(async (request) => {
     if (!cardId) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'missing_card' }); return json({ error: 'Each transaction needs card_id or card_name.' }, 400) }
     const { data: card } = await client.from('credit_cards').select('id').eq('id', cardId).eq('user_id', keyRecord.user_id).maybeSingle()
     if (!card) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'card_not_owned' }); return json({ error: 'Card not found for this API key owner.' }, 400) }
-    rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth })
+    rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth, notes })
   }
 
   const duplicateKey = (name, date, amount) => name.trim().toLowerCase() + '|' + date + '|' + Number(amount).toFixed(2)
@@ -66,7 +68,7 @@ Deno.serve(async (request) => {
     log('transactions_skipped_as_duplicates', { user_id: keyRecord.user_id, skipped })
     return json({ inserted: 0, skipped, transactions: [] }, 200)
   }
-  const { data, error } = await client.from('card_transactions').insert(rowsToInsert).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at')
+  const { data, error } = await client.from('card_transactions').insert(rowsToInsert).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at')
   if (error) { log('insert_failed', { user_id: keyRecord.user_id, count: rowsToInsert.length, error: error.message }); return json({ error: error.message }, 500) }
   log('transactions_inserted', { user_id: keyRecord.user_id, inserted: data?.length || 0, skipped })
   await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
