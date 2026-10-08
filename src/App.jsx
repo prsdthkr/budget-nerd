@@ -29,7 +29,7 @@ const ACCOUNT_CURRENCIES = [
 ]
 
 
-const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
+const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
 
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
@@ -57,7 +57,7 @@ const TRANSACTION_TYPES = [
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
 const CASHFLOW_MONTHS = 12
 const blankActivityFilters = { name: '', amount: '', dateFrom: '', dateTo: '', statementMonth: '', cashflowMonth: '', cardId: '', category: '' }
-const defaultLedgerForm = (accountId = '') => ({ accountId, description: '', date: new Date().toISOString().slice(0, 10), cashflowMonth: '', realizedAmount: '', plannedAmount: '', recurring: false })
+const defaultLedgerForm = (accountId = '') => ({ accountId, description: '', notes: '', date: new Date().toISOString().slice(0, 10), cashflowMonth: '', realizedAmount: '', plannedAmount: '', recurring: false })
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -185,7 +185,7 @@ export default function App() {
 
   const loadTransactions = async (cardId) => {
     setTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions(response.data || [])
@@ -193,7 +193,7 @@ export default function App() {
 
   const loadAllTransactions = async () => {
     setAllTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
@@ -203,7 +203,7 @@ export default function App() {
     setBankLoading(true)
     const [accountsResponse, ledgerResponse] = await Promise.all([
       supabase.from('bank_accounts').select('id, name, account_number, routing_number, starting_balance, minimum_balance, currency, created_at').order('created_at', { ascending: true }),
-      supabase.from('account_ledger_items').select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').order('ledger_date', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('account_ledger_items').select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').order('ledger_date', { ascending: false }).order('created_at', { ascending: false }),
     ])
     setBankLoading(false)
     if (accountsResponse.error) return setNotice({ type: 'error', text: accountsResponse.error.message })
@@ -257,7 +257,7 @@ export default function App() {
     if (!transferForm.date || !Number.isFinite(amount) || amount <= 0) return setNotice({ type: 'error', text: 'Enter a date and a transfer amount greater than zero.' })
     setTransferBusy(true)
     setNotice(null)
-    const fields = 'id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at'
+    const fields = 'id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at'
     const isPlanned = transferForm.kind === 'planned'
     const sourceValues = { account_id: source.id, description: transferForm.description.trim() || 'Account transfer to ' + destination.name, ledger_date: transferForm.date, realized_amount: isPlanned ? 0 : -amount, planned_amount: isPlanned ? -amount : 0, recurring: false }
     const sourceEntry = await supabase.from('account_ledger_items').insert(sourceValues).select(fields).single()
@@ -277,7 +277,7 @@ export default function App() {
   const changeLedgerForm = ({ target }) => setLedgerForm((current) => ({ ...current, [target.name]: target.type === 'checkbox' ? target.checked : target.value }))
   const swapLedgerAmounts = () => setLedgerForm((current) => ({ ...current, realizedAmount: current.plannedAmount, plannedAmount: current.realizedAmount }))
   const swapLedgerItemAmounts = async (item) => {
-    const response = await supabase.from('account_ledger_items').update({ realized_amount: Number(item.planned_amount || 0), planned_amount: Number(item.realized_amount || 0) }).eq('id', item.id).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
+    const response = await supabase.from('account_ledger_items').update({ realized_amount: Number(item.planned_amount || 0), planned_amount: Number(item.realized_amount || 0) }).eq('id', item.id).select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
     if (response.error) { setNotice({ type: 'error', text: response.error.message }); return false }
     setBankLedger((current) => current.map((entry) => entry.id === item.id ? response.data : entry))
     return true
@@ -287,7 +287,7 @@ export default function App() {
     if (item.source_type === 'card_payment') { setNotice({ type: 'error', text: 'Card payment amounts are calculated from statement transactions.' }); return false }
     const amount = Number(String(value).replace(/[$,]/g, '').trim())
     if (!Number.isFinite(amount)) { setNotice({ type: 'error', text: 'Enter a valid amount.' }); return false }
-    const response = await supabase.from('account_ledger_items').update({ [field]: amount }).eq('id', item.id).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
+    const response = await supabase.from('account_ledger_items').update({ [field]: amount }).eq('id', item.id).select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
     if (response.error) { setNotice({ type: 'error', text: response.error.message }); return false }
     setBankLedger((current) => current.map((entry) => entry.id === item.id ? response.data : entry))
     return true
@@ -303,8 +303,8 @@ export default function App() {
     if (!ledgerForm.date || !Number.isFinite(realizedAmount) || !Number.isFinite(plannedAmount)) return setNotice({ type: 'error', text: 'Enter a date and valid realized and planned amounts.' })
     setLedgerBusy(true)
     const ledgerAccountId = ledgerForm.accountId || selectedAccountId
-    const values = { account_id: ledgerAccountId, description: ledgerForm.description.trim(), ledger_date: ledgerForm.date, cashflow_month: ledgerForm.cashflowMonth ? ledgerForm.cashflowMonth + '-01' : null, realized_amount: realizedAmount, planned_amount: plannedAmount, recurring: ledgerForm.recurring }
-    const response = editingLedger ? await supabase.from('account_ledger_items').update(values).eq('id', editingLedger.id).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single()
+    const values = { account_id: ledgerAccountId, description: ledgerForm.description.trim(), notes: ledgerForm.notes.trim(), ledger_date: ledgerForm.date, cashflow_month: ledgerForm.cashflowMonth ? ledgerForm.cashflowMonth + '-01' : null, realized_amount: realizedAmount, planned_amount: plannedAmount, recurring: ledgerForm.recurring }
+    const response = editingLedger ? await supabase.from('account_ledger_items').update(values).eq('id', editingLedger.id).select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at').single()
     setLedgerBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => editingLedger ? current.map((item) => item.id === response.data.id ? response.data : item) : [response.data, ...current])
@@ -324,7 +324,7 @@ export default function App() {
     if (!item) return
     setEditingLedger(item)
     setLedgerFormOpen(true)
-    setLedgerForm({ accountId: item.account_id, description: item.description || '', date: item.ledger_date, cashflowMonth: item.cashflow_month ? item.cashflow_month.slice(0, 7) : '', realizedAmount: String(item.realized_amount), plannedAmount: String(item.planned_amount), recurring: item.recurring })
+    setLedgerForm({ accountId: item.account_id, description: item.description || '', notes: item.notes || '', date: item.ledger_date, cashflowMonth: item.cashflow_month ? item.cashflow_month.slice(0, 7) : '', realizedAmount: String(item.realized_amount), plannedAmount: String(item.planned_amount), recurring: item.recurring })
   }
 
   const deleteLedgerItem = async (item) => {
@@ -340,7 +340,7 @@ export default function App() {
     if (!selectedAccountId) return
     const currentItems = bankLedger.filter((item) => item && item.account_id === selectedAccountId && item.ledger_date && item.ledger_date.slice(0, 7) === planMonth && item.recurring)
     if (!currentItems.length) return setNotice({ type: 'error', text: 'There are no recurring items in this month to copy.' })
-    const nextItems = currentItems.map((item) => ({ account_id: selectedAccountId, description: item.description, ledger_date: nextMonthDate(item.ledger_date), cashflow_month: item.cashflow_month ? nextMonthDate(item.cashflow_month) : null, realized_amount: 0, planned_amount: Number(item.planned_amount) || Number(item.realized_amount) || 0, recurring: true, recurrence_id: item.recurrence_id }))
+    const nextItems = currentItems.map((item) => ({ account_id: selectedAccountId, description: item.description, notes: item.notes || '', ledger_date: nextMonthDate(item.ledger_date), cashflow_month: item.cashflow_month ? nextMonthDate(item.cashflow_month) : null, realized_amount: 0, planned_amount: Number(item.planned_amount) || Number(item.realized_amount) || 0, recurring: true, recurrence_id: item.recurrence_id }))
     const response = await supabase.from('account_ledger_items').upsert(nextItems, { onConflict: 'account_id,recurrence_id,ledger_date', ignoreDuplicates: true }).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at')
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => [...current, ...(response.data || [])])
@@ -350,7 +350,7 @@ export default function App() {
   const loadActivityTransactions = async (filters = activityFilters) => {
     setActivityLoading(true)
     const hasFilters = Object.values(filters).some(Boolean)
-    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     if (filters.name.trim()) query = query.ilike('name', '%' + filters.name.trim() + '%')
     if (filters.amount !== '') {
       const amount = Number(filters.amount)
@@ -571,11 +571,12 @@ export default function App() {
       card_id: selectedCard.id,
       type: transactionForm.type,
       name,
+      notes: transactionForm.notes.trim(),
       transaction_date: date,
       amount,
       statement_month: statementMonth + '-01',
       cashflow_month: transactionForm.cashflowMonth ? transactionForm.cashflowMonth + '-01' : null,
-    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').single()
+    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').single()
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
@@ -587,7 +588,7 @@ export default function App() {
 
   const openEditTransaction = (transaction) => {
     setEditingTransaction(transaction)
-    setEditTransactionForm({ type: transaction.type, name: transaction.name, date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : formatIsoMonth(new Date()) })
+    setEditTransactionForm({ type: transaction.type, name: transaction.name, notes: transaction.notes || '', date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : formatIsoMonth(new Date()) })
     setNotice(null)
   }
 
@@ -603,7 +604,7 @@ export default function App() {
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     setEditBusy(true)
     setNotice(null)
-    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, created_at').single()
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').single()
     setEditBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
@@ -632,7 +633,7 @@ export default function App() {
     setNotice(null)
     const existing = bankLedger.find((item) => item.source_type === 'card_payment' && item.card_id === cardId && item.statement_month?.slice(0, 7) === statementMonth)
     const values = { account_id: accountId, description: cardName + ' payment - ' + formatMonth(statementMonth + '-01'), ledger_date: statementPaymentDate(statementMonth, statementDay), realized_amount: 0, planned_amount: -Number(amount || 0), recurring: false, source_type: 'card_payment', card_id: cardId, statement_month: statementMonth + '-01' }
-    const response = existing ? await supabase.from('account_ledger_items').update(values).eq('id', existing.id).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
+    const response = existing ? await supabase.from('account_ledger_items').update(values).eq('id', existing.id).select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, notes, ledger_date, cashflow_month, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
     setPaymentBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => existing ? current.map((item) => item.id === response.data.id ? response.data : item) : [response.data, ...current])
