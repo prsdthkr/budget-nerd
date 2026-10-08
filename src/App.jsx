@@ -29,7 +29,7 @@ const ACCOUNT_CURRENCIES = [
 ]
 
 
-const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
+const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', recurring: false, date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
 
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
@@ -202,7 +202,7 @@ export default function App() {
 
   const loadTransactions = async (cardId) => {
     setTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions(response.data || [])
@@ -210,7 +210,7 @@ export default function App() {
 
   const loadAllTransactions = async () => {
     setAllTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
@@ -367,7 +367,7 @@ export default function App() {
   const loadActivityTransactions = async (filters = activityFilters) => {
     setActivityLoading(true)
     const hasFilters = Object.values(filters).some(Boolean)
-    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     if (filters.name.trim()) query = query.ilike('name', '%' + filters.name.trim() + '%')
     if (filters.amount !== '') {
       const amount = Number(filters.amount)
@@ -589,11 +589,12 @@ export default function App() {
       type: transactionForm.type,
       name,
       notes: transactionForm.notes.trim(),
+      recurring: transactionForm.recurring,
       transaction_date: date,
       amount,
       statement_month: statementMonth + '-01',
       cashflow_month: transactionForm.cashflowMonth ? transactionForm.cashflowMonth + '-01' : null,
-    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').single()
+    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').single()
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
@@ -605,7 +606,7 @@ export default function App() {
 
   const openEditTransaction = (transaction) => {
     setEditingTransaction(transaction)
-    setEditTransactionForm({ type: transaction.type, name: transaction.name, notes: transaction.notes || '', date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : formatIsoMonth(new Date()) })
+    setEditTransactionForm({ type: transaction.type, name: transaction.name, notes: transaction.notes || '', recurring: Boolean(transaction.recurring), date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : formatIsoMonth(new Date()) })
     setNotice(null)
   }
 
@@ -621,7 +622,7 @@ export default function App() {
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     setEditBusy(true)
     setNotice(null)
-    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, created_at').single()
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), recurring: editTransactionForm.recurring, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').single()
     setEditBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
