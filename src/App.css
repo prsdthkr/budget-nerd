@@ -255,3 +255,6 @@
 .due-date-badge{display:inline-flex;align-items:center;margin-left:.4rem;padding:.15rem .4rem;border-radius:999px;color:var(--bs-danger-text-emphasis);background:var(--bs-danger-bg-subtle);font-size:.68rem;font-weight:650;white-space:nowrap}
 
 .ledger-sort-toggle .btn{min-width:38px;padding:.35rem .55rem;font-size:1rem;font-weight:800}
+
+.plan-account-tabs{display:flex!important;flex-wrap:nowrap!important;align-items:flex-end;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}.plan-account-tabs .nav-item{flex:0 0 auto;width:auto!important}.plan-account-tabs .nav-link{white-space:nowrap}.ledger-history-heading{align-items:center;gap:.75rem}.ledger-history-title{display:flex;align-items:center;gap:.5rem;min-width:0}.ledger-history-title h3{margin:0}.ledger-history-title span{min-width:1.5rem;padding:.2rem .4rem;border-radius:99px;color:var(--bs-primary-text-emphasis);background:var(--bs-primary-bg-subtle);text-align:center;font-size:.75rem;font-weight:800}.ledger-history-heading .ledger-sort-toggle{margin-left:auto}
+@media(max-width:560px){.ledger-history-heading{align-items:stretch;flex-direction:column}.ledger-history-heading .ledger-sort-toggle{margin-left:0;align-self:flex-start}}
