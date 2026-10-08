@@ -260,3 +260,6 @@
 @media(max-width:560px){.ledger-history-heading{align-items:stretch;flex-direction:column}.ledger-history-heading .ledger-sort-toggle{margin-left:0;align-self:flex-start}}
 
 .entry-note{color:var(--bs-secondary-color);font-size:.85em;font-style:italic;font-weight:400}
+
+.category-settings-list{display:grid;gap:.5rem}.category-settings-row{display:grid;grid-template-columns:60px minmax(0,1fr) auto auto;align-items:center;gap:.5rem}.category-settings-row .form-control{min-width:0}.category-add-form{display:grid;grid-template-columns:1fr 1fr 90px auto;gap:.5rem;margin-top:1rem}.category-add-form .btn{white-space:nowrap}
+@media(max-width:600px){.category-settings-row{grid-template-columns:50px minmax(0,1fr) auto}.category-settings-row .btn:last-child{grid-column:2/-1}.category-add-form{grid-template-columns:1fr}.category-add-form .btn{width:100%}}
