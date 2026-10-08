@@ -752,14 +752,19 @@ function InlineLedgerAmount({ item, field, currency, editing, setEditing, update
   return <strong className={field === 'realized_amount' ? 'inline-ledger-amount realized-ledger-amount' : 'inline-ledger-amount planned-ledger-amount'} title="Double-click to edit" onDoubleClick={() => setEditing({ id: item.id, field, value: String(value ?? 0) })}>{formatAccountAmount(currency, value)}</strong>
 }
 
-function SettingsView() {
+function SettingsView({ refreshCategories }) {
   const [keys, setKeys] = useState([])
   const [name, setName] = useState('')
   const [revealedKey, setRevealedKey] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [categoryEdits, setCategoryEdits] = useState({})
+  const [newCategory, setNewCategory] = useState({ slug: '', label: '', emoji: '•' })
+  const [categoryBusy, setCategoryBusy] = useState(false)
   const endpoint = import.meta.env.VITE_SUPABASE_URL + '/functions/v1/api-keys'
+  const categories = TRANSACTION_TYPES
+  const categoryKey = categories.map((category) => category.value + ':' + category.label + ':' + category.emoji).join('|')
   const curlExample = [
     'curl -X POST "$VITE_SUPABASE_URL/functions/v1/transactions-api" \\\\',
     '  -H "Authorization: Bearer bn_live_your_key" \\\\',
@@ -781,6 +786,7 @@ function SettingsView() {
     try { const result = await request('GET'); setKeys(result.keys || []) } catch (caught) { setError(caught.message) } finally { setLoading(false) }
   }
   useEffect(() => { loadKeys() }, [])
+  useEffect(() => { setCategoryEdits(Object.fromEntries(categories.map((category) => [category.value, { label: category.label, emoji: category.emoji }]))) }, [categoryKey])
 
   const createKey = async (event) => {
     event.preventDefault()
@@ -788,12 +794,50 @@ function SettingsView() {
     setBusy(true); setError(''); setRevealedKey('')
     try { const result = await request('POST', { name: name.trim() }); setKeys((current) => [result.record, ...current]); setRevealedKey(result.key); setName('') } catch (caught) { setError(caught.message) } finally { setBusy(false) }
   }
+  const saveCategory = async (category) => {
+    const edit = categoryEdits[category.value]
+    if (!edit?.label.trim() || !edit.emoji.trim()) return
+    setCategoryBusy(true); setError('')
+    const response = await supabase.from('transaction_categories').update({ label: edit.label.trim(), emoji: edit.emoji.trim() }).eq('user_id', (await supabase.auth.getUser()).data.user?.id).eq('slug', category.value)
+    setCategoryBusy(false)
+    if (response.error) return setError(response.error.message)
+    await refreshCategories()
+  }
+
+  const addCategory = async (event) => {
+    event.preventDefault()
+    const slug = newCategory.slug.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+    if (!slug || !newCategory.label.trim() || !newCategory.emoji.trim() || slug === 'misc') return setError('Enter a valid category; misc is reserved.')
+    setCategoryBusy(true); setError('')
+    const user = (await supabase.auth.getUser()).data.user
+    const response = await supabase.from('transaction_categories').insert({ user_id: user.id, slug, label: newCategory.label.trim(), emoji: newCategory.emoji.trim(), sort_order: categories.length, is_active: true })
+    setCategoryBusy(false)
+    if (response.error) return setError(response.error.message)
+    setNewCategory({ slug: '', label: '', emoji: '•' })
+    await refreshCategories()
+  }
+
+  const deleteCategory = async (category) => {
+    if (category.value === 'misc') return
+    if (!window.confirm('Delete ' + category.label + '? Existing transactions will move to Misc.')) return
+    setCategoryBusy(true); setError('')
+    const user = (await supabase.auth.getUser()).data.user
+    const transactions = await supabase.from('card_transactions').update({ type: 'misc' }).eq('user_id', user.id).eq('type', category.value)
+    if (transactions.error) { setCategoryBusy(false); return setError(transactions.error.message) }
+    const cards = await supabase.from('credit_cards').update({ default_category: 'misc' }).eq('user_id', user.id).eq('default_category', category.value)
+    if (cards.error) { setCategoryBusy(false); return setError(cards.error.message) }
+    const response = await supabase.from('transaction_categories').update({ is_active: false }).eq('user_id', user.id).eq('slug', category.value)
+    setCategoryBusy(false)
+    if (response.error) return setError(response.error.message)
+    await refreshCategories()
+  }
+
   const revokeKey = async (id) => {
     if (!window.confirm('Revoke this API key? Existing integrations will stop working.')) return
     try { await request('PATCH', { id }); setKeys((current) => current.map((key) => key.id === id ? { ...key, revoked_at: new Date().toISOString() } : key)) } catch (caught) { setError(caught.message) }
   }
 
-  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Account</p><h1>Settings</h1><p className="muted">Manage write-only API keys for importing transactions from trusted tools.</p></div></div><section className="content-card settings-section"><p className="eyebrow">Transaction API keys</p><h2>Create an import key</h2><p className="muted">Keys can add transactions only. They cannot read, edit, or delete your data.</p><Form onSubmit={createKey} className="api-key-create-form"><Form.Control value={name} onChange={(event) => setName(event.target.value)} placeholder="Key name, e.g. Bank CSV importer" maxLength={80} required /><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Creating...' : 'Create API key'}</Button></Form>{error && <Alert variant="danger" className="mt-3">{error}</Alert>}{revealedKey && <Alert variant="success" className="mt-3"><strong>Copy this key now.</strong> It will not be shown again.<Form.Control className="mt-2" readOnly value={revealedKey} onFocus={(event) => event.target.select()} /></Alert>}</section><section className="content-card settings-section"><div className="history-heading"><h2>Your API keys</h2><span>{keys.length}</span></div>{loading ? <p className="muted">Loading keys...</p> : keys.length === 0 ? <p className="muted">No API keys created.</p> : <div className="api-key-list">{keys.map((key) => <div className="api-key-row" key={key.id}><div><strong>{key.name}</strong><small>{key.key_prefix}•••• · Created {formatDate(key.created_at.slice(0, 10))}{key.revoked_at ? ' · Revoked' : ''}</small></div>{key.revoked_at ? <span className="text-muted">Revoked</span> : <Button size="sm" variant="outline-danger" onClick={() => revokeKey(key.id)}>Revoke</Button>}</div>)}</div>}</section><section className="content-card settings-section"><p className="eyebrow">API usage</p><h2>Import transactions with curl</h2><p className="muted">Use the URL below with an API key created above. Replace the placeholders with your values.</p><pre className="api-example">{curlExample}</pre></section></div>
+  return <div className="view-stack"><div className="page-heading"><div><p className="eyebrow">Account</p><h1>Settings</h1><p className="muted">Manage write-only API keys for importing transactions from trusted tools.</p></div></div><section className="content-card settings-section"><p className="eyebrow">Transaction categories</p><h2>Customize categories</h2><p className="muted">Edit labels and emoji, add categories, or delete categories. Misc is always preserved as the fallback.</p><div className="category-settings-list">{categories.map((category) => <div className="category-settings-row" key={category.value}><Form.Control value={categoryEdits[category.value]?.emoji || category.emoji} onChange={(event) => setCategoryEdits((current) => ({ ...current, [category.value]: { ...current[category.value], emoji: event.target.value } }))} aria-label={category.label + ' emoji'} maxLength={4} /><Form.Control value={categoryEdits[category.value]?.label || category.label} onChange={(event) => setCategoryEdits((current) => ({ ...current, [category.value]: { ...current[category.value], label: event.target.value } }))} aria-label={category.label + ' label'} /><Button size="sm" variant="outline-primary" disabled={categoryBusy} onClick={() => saveCategory(category)}>Save</Button>{category.value === 'misc' ? <span className="text-muted">Required</span> : <Button size="sm" variant="outline-danger" disabled={categoryBusy} onClick={() => deleteCategory(category)}>Delete</Button>}</div>)}</div><Form className="category-add-form" onSubmit={addCategory}><Form.Control value={newCategory.slug} onChange={(event) => setNewCategory((current) => ({ ...current, slug: event.target.value }))} placeholder="slug, e.g. pets" maxLength={40} required /><Form.Control value={newCategory.label} onChange={(event) => setNewCategory((current) => ({ ...current, label: event.target.value }))} placeholder="Label" maxLength={80} required /><Form.Control value={newCategory.emoji} onChange={(event) => setNewCategory((current) => ({ ...current, emoji: event.target.value }))} placeholder="Emoji" maxLength={4} required /><Button type="submit" variant="primary" disabled={categoryBusy}>Add category</Button></Form></section><section className="content-card settings-section"><p className="eyebrow">Transaction API keys</p><h2>Create an import key</h2><p className="muted">Keys can add transactions only. They cannot read, edit, or delete your data.</p><Form onSubmit={createKey} className="api-key-create-form"><Form.Control value={name} onChange={(event) => setName(event.target.value)} placeholder="Key name, e.g. Bank CSV importer" maxLength={80} required /><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Creating...' : 'Create API key'}</Button></Form>{error && <Alert variant="danger" className="mt-3">{error}</Alert>}{revealedKey && <Alert variant="success" className="mt-3"><strong>Copy this key now.</strong> It will not be shown again.<Form.Control className="mt-2" readOnly value={revealedKey} onFocus={(event) => event.target.select()} /></Alert>}</section><section className="content-card settings-section"><div className="history-heading"><h2>Your API keys</h2><span>{keys.length}</span></div>{loading ? <p className="muted">Loading keys...</p> : keys.length === 0 ? <p className="muted">No API keys created.</p> : <div className="api-key-list">{keys.map((key) => <div className="api-key-row" key={key.id}><div><strong>{key.name}</strong><small>{key.key_prefix}•••• · Created {formatDate(key.created_at.slice(0, 10))}{key.revoked_at ? ' · Revoked' : ''}</small></div>{key.revoked_at ? <span className="text-muted">Revoked</span> : <Button size="sm" variant="outline-danger" onClick={() => revokeKey(key.id)}>Revoke</Button>}</div>)}</div>}</section><section className="content-card settings-section"><p className="eyebrow">API usage</p><h2>Import transactions with curl</h2><p className="muted">Use the URL below with an API key created above. Replace the placeholders with your values.</p><pre className="api-example">{curlExample}</pre></section></div>
 }
 
 function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
