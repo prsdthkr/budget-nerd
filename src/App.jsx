@@ -187,6 +187,7 @@ export default function App() {
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     if (response.data?.length) {
       TRANSACTION_TYPES.splice(0, TRANSACTION_TYPES.length, ...response.data.map((item) => ({ value: item.slug, label: item.label, emoji: item.emoji })))
+      SPEND_TYPES.splice(0, SPEND_TYPES.length, ...TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value)))
       setTransactionTypesVersion((version) => version + 1)
     }
   }
