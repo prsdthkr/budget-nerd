@@ -84,7 +84,10 @@ create table if not exists public.card_transactions (
   statement_month date not null check (statement_month = date_trunc('month', statement_month)::date),
   cashflow_month date null default date_trunc('month', current_date)::date check (cashflow_month is null or cashflow_month = date_trunc('month', cashflow_month)::date),
   notes text not null default '',
-  created_at timestamptz not null default now()
+  recurring boolean not null default false,
+  recurrence_id uuid not null default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  unique (card_id, recurrence_id, statement_month)
 );
 
 create index if not exists credit_cards_user_sort_idx on public.credit_cards (user_id, sort_order, created_at);
