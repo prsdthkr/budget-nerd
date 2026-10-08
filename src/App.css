@@ -265,3 +265,5 @@
 @media(max-width:600px){.category-settings-row{grid-template-columns:50px minmax(0,1fr) auto}.category-settings-row .btn:last-child{grid-column:2/-1}.category-add-form{grid-template-columns:1fr}.category-add-form .btn{width:100%}}
 
 .recurring-check{display:flex;align-items:center;gap:.5rem;padding-left:0}.recurring-check .form-check-input{position:static;float:none;width:1.1rem;height:1.1rem;margin:0;flex:0 0 auto}.recurring-check .form-check-label{margin:0;color:var(--bs-body-color)}
+
+.native-recurring-check{display:flex;align-items:center;gap:.5rem;margin-top:.65rem;color:var(--bs-body-color);cursor:pointer}.native-recurring-check input{width:1rem;height:1rem;margin:0;accent-color:var(--bs-primary);cursor:pointer}.native-recurring-check span{font-size:.9rem}
