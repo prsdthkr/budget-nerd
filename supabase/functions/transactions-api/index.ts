@@ -1,7 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-api-key' }
-const TYPES = new Set(['subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities'])
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!)
 const log = (event: string, details: Record<string, unknown> = {}) => console.log(JSON.stringify({ service: 'transactions-api', event, at: new Date().toISOString(), ...details }))
@@ -36,7 +35,8 @@ Deno.serve(async (request) => {
     const amount = Number(entry?.amount)
     if (!name || name.length > 120) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_name' }); return json({ error: 'Each transaction needs a name between 1 and 120 characters.' }, 400) }
     if (notes.length > 500) return json({ error: 'Transaction notes cannot exceed 500 characters.' }, 400)
-    if (!TYPES.has(type)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'unsupported_type', type }); return json({ error: 'Unsupported transaction type: ' + type }, 400) }
+    const { data: category } = await client.from('transaction_categories').select('slug').eq('user_id', keyRecord.user_id).eq('slug', type).eq('is_active', true).maybeSingle()
+    if (!category) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'unsupported_type', type }); return json({ error: 'Unsupported transaction type: ' + type }, 400) }
     if (!validDate(transactionDate)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_date' }); return json({ error: 'Each transaction needs transaction_date in YYYY-MM-DD format.' }, 400) }
     if (!Number.isFinite(amount)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_amount' }); return json({ error: 'Each transaction needs a numeric amount.' }, 400) }
     const statementMonth = entry?.statement_month || monthForDate(transactionDate)

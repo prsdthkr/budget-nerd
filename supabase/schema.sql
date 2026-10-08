@@ -1,7 +1,9 @@
 -- Run this script in Supabase Dashboard -> SQL Editor.
 -- It creates the protected tables and policies used by the starter app.
 
-create table if not exists public.profiles (
+create table if not exists public.transaction_categories (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  slug text not null check (slug ~ '^[a-z0-9_-]+
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   created_at timestamptz not null default now()
@@ -19,7 +21,7 @@ create table if not exists public.credit_cards (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   name text not null check (char_length(btrim(name)) between 1 and 80),
   color text not null default '#2563eb',
-  default_category text not null default 'misc' check (default_category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
+  default_category text not null default 'misc',
   statement_day smallint null check (statement_day is null or statement_day between 1 and 31),
   due_day smallint null check (due_day is null or due_day between 1 and 31),
   default_statement_month date null check (default_statement_month is null or default_statement_month = date_trunc('month', default_statement_month)::date),
@@ -65,7 +67,7 @@ create unique index if not exists account_ledger_card_payment_unique_idx on publ
 
 create table if not exists public.category_limits (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  category text not null check (category in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
+  category text not null,
   limit_amount numeric(12, 2) not null default 1000 check (limit_amount >= 0),
   created_at timestamptz not null default now(),
   primary key (user_id, category)
@@ -75,7 +77,204 @@ create table if not exists public.card_transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   card_id uuid not null references public.credit_cards(id) on delete cascade,
-  type text not null check (type in ('subscription', 'grocery', 'shopping', 'misc', 'travel', 'food', 'remit', 'cashback', 'car', 'rent', 'supplies', 'utilities')),
+  type text not null,
+  name text not null check (char_length(btrim(name)) between 1 and 120),
+  transaction_date date not null default current_date,
+  amount numeric(12, 2) not null,
+  statement_month date not null check (statement_month = date_trunc('month', statement_month)::date),
+  cashflow_month date null default date_trunc('month', current_date)::date check (cashflow_month is null or cashflow_month = date_trunc('month', cashflow_month)::date),
+  notes text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists credit_cards_user_sort_idx on public.credit_cards (user_id, sort_order, created_at);
+create index if not exists card_transactions_user_date_idx on public.card_transactions (user_id, transaction_date desc, created_at desc);
+create index if not exists card_transactions_card_date_idx on public.card_transactions (card_id, transaction_date desc, created_at desc);
+
+alter table public.profiles enable row level security;
+alter table public.pings enable row level security;
+alter table public.credit_cards enable row level security;
+alter table public.card_transactions enable row level security;
+
+grant select on public.profiles to authenticated;
+grant select, insert on public.pings to authenticated;
+grant select, insert, update, delete on public.credit_cards to authenticated;
+grant select, insert, update, delete on public.card_transactions to authenticated;
+grant select, insert, update, delete on public.bank_accounts to authenticated;
+grant select, insert, update, delete on public.account_ledger_items to authenticated;
+grant select, insert, update, delete on public.category_limits to authenticated;
+
+drop policy if exists "Users can read their own profile" on public.profiles;
+create policy "Users can read their own profile" on public.profiles for select to authenticated using ((select auth.uid()) = id);
+drop policy if exists "Users can read their own pings" on public.pings;
+create policy "Users can read their own pings" on public.pings for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Users can insert their own pings" on public.pings;
+create policy "Users can insert their own pings" on public.pings for insert to authenticated with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can read their own credit cards" on public.credit_cards;
+create policy "Users can read their own credit cards" on public.credit_cards for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Users can add their own credit cards" on public.credit_cards;
+create policy "Users can add their own credit cards" on public.credit_cards for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "Users can update their own credit cards" on public.credit_cards;
+create policy "Users can update their own credit cards" on public.credit_cards for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "Users can delete their own credit cards" on public.credit_cards;
+create policy "Users can delete their own credit cards" on public.credit_cards for delete to authenticated using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can manage their own bank accounts" on public.bank_accounts;
+create policy "Users can manage their own bank accounts" on public.bank_accounts for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "Users can manage their own ledger items" on public.account_ledger_items;
+create policy "Users can manage their own ledger items" on public.account_ledger_items for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id and exists (select 1 from public.bank_accounts where id = account_id and user_id = (select auth.uid())));
+
+drop policy if exists "Users can read their own category limits" on public.category_limits;
+create policy "Users can read their own category limits" on public.category_limits for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Users can manage their own category limits" on public.category_limits;
+create policy "Users can manage their own category limits" on public.category_limits for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can read their own card transactions" on public.card_transactions;
+create policy "Users can read their own card transactions" on public.card_transactions for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "Users can add their own card transactions" on public.card_transactions;
+create policy "Users can add their own card transactions" on public.card_transactions for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())));
+drop policy if exists "Users can update their own card transactions" on public.card_transactions;
+create policy "Users can update their own card transactions" on public.card_transactions for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())));
+drop policy if exists "Users can delete their own card transactions" on public.card_transactions;
+create policy "Users can delete their own card transactions" on public.card_transactions for delete to authenticated using ((select auth.uid()) = user_id);
+
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email) values (new.id, new.email)
+  on conflict (id) do update set email = excluded.email;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+
+create or replace function public.sync_card_payment_planned_amount()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $
+declare
+  target_card_id uuid;
+  target_statement_month date;
+  statement_total numeric;
+begin
+  if (TG_OP = 'DELETE' or TG_OP = 'UPDATE') then
+    target_card_id := old.card_id;
+    target_statement_month := old.statement_month;
+    if target_card_id is not null and target_statement_month is not null then
+      select coalesce(sum(amount), 0) into statement_total from public.card_transactions where card_id = target_card_id and statement_month = target_statement_month;
+      update public.account_ledger_items set planned_amount = -statement_total where source_type = 'card_payment' and card_id = target_card_id and statement_month = target_statement_month and not (realized_amount <> 0 and planned_amount = 0);
+    end if;
+  end if;
+  if (TG_OP = 'INSERT' or TG_OP = 'UPDATE') then
+    target_card_id := new.card_id;
+    target_statement_month := new.statement_month;
+    if target_card_id is not null and target_statement_month is not null then
+      select coalesce(sum(amount), 0) into statement_total from public.card_transactions where card_id = target_card_id and statement_month = target_statement_month;
+      update public.account_ledger_items set planned_amount = -statement_total where source_type = 'card_payment' and card_id = target_card_id and statement_month = target_statement_month;
+    end if;
+  end if;
+  return coalesce(new, old);
+end;
+$;
+
+drop trigger if exists sync_card_payment_after_transaction_change on public.card_transactions;
+create trigger sync_card_payment_after_transaction_change after insert or update or delete on public.card_transactions for each row execute procedure public.sync_card_payment_planned_amount();
+
+notify pgrst, 'reload schema';
+),
+  label text not null check (char_length(btrim(label)) between 1 and 80),
+  emoji text not null default '•',
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  primary key (user_id, slug)
+);
+
+alter table public.transaction_categories enable row level security;
+grant select, insert, update, delete on public.transaction_categories to authenticated;
+drop policy if exists "Users can manage their own transaction categories" on public.transaction_categories;
+create policy "Users can manage their own transaction categories" on public.transaction_categories for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.pings (
+  id bigint generated by default as identity primary key,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.credit_cards (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null check (char_length(btrim(name)) between 1 and 80),
+  color text not null default '#2563eb',
+  default_category text not null default 'misc',
+  statement_day smallint null check (statement_day is null or statement_day between 1 and 31),
+  due_day smallint null check (due_day is null or due_day between 1 and 31),
+  default_statement_month date null check (default_statement_month is null or default_statement_month = date_trunc('month', default_statement_month)::date),
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.bank_accounts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null check (char_length(btrim(name)) between 1 and 100),
+  account_number text not null,
+  routing_number text not null,
+  starting_balance numeric(12, 2) not null default 0,
+  minimum_balance numeric(12, 2) not null default 0 check (minimum_balance >= 0),
+  currency text not null default 'USD' check (currency in ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY', 'CHF', 'SGD')),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.account_ledger_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  account_id uuid not null references public.bank_accounts(id) on delete cascade,
+  description text not null default '',
+  notes text not null default '',
+  ledger_date date not null default current_date,
+  cashflow_month date,
+  realized_amount numeric(12, 2) not null default 0,
+  planned_amount numeric(12, 2) not null default 0,
+  recurring boolean not null default false,
+  source_type text not null default 'manual' check (source_type in ('manual', 'card_payment')),
+  card_id uuid references public.credit_cards(id) on delete cascade,
+  statement_month date,
+  recurrence_id uuid not null default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  unique (account_id, recurrence_id, ledger_date)
+);
+
+create index if not exists bank_accounts_user_idx on public.bank_accounts (user_id);
+create index if not exists account_ledger_user_date_idx on public.account_ledger_items (user_id, ledger_date desc);
+create index if not exists account_ledger_account_date_idx on public.account_ledger_items (account_id, ledger_date desc);
+create unique index if not exists account_ledger_card_payment_unique_idx on public.account_ledger_items (card_id, statement_month) where source_type = 'card_payment';
+
+create table if not exists public.category_limits (
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  category text not null,
+  limit_amount numeric(12, 2) not null default 1000 check (limit_amount >= 0),
+  created_at timestamptz not null default now(),
+  primary key (user_id, category)
+);
+
+create table if not exists public.card_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  card_id uuid not null references public.credit_cards(id) on delete cascade,
+  type text not null,
   name text not null check (char_length(btrim(name)) between 1 and 120),
   transaction_date date not null default current_date,
   amount numeric(12, 2) not null,
