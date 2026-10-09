@@ -69,7 +69,8 @@ create unique index if not exists account_ledger_card_payment_unique_idx on publ
 create table if not exists public.category_limits (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   category text not null,
-  limit_amount numeric(12, 2) not null default 1000 check (limit_amount >= 0),
+  limit_amount numeric(12, 2) check (limit_amount is null or limit_amount >= 0),
+  is_tracked boolean not null default false,
   created_at timestamptz not null default now(),
   primary key (user_id, category)
 );
