@@ -445,7 +445,7 @@ export default function App() {
     setLimitsBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setLimitsOpen(false)
-    setNotice({ type: 'success', text: 'Monthly spend limits updated.' })
+    setNotice({ type: 'success', text: 'Spend tracking preferences updated.' })
   }
 
   const changeCredentials = ({ target }) => setCredentials((current) => ({ ...current, [target.name]: target.value }))
