@@ -46,6 +46,7 @@ create table if not exists public.account_ledger_items (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   account_id uuid not null references public.bank_accounts(id) on delete cascade,
   description text not null default '',
+  category text not null default 'misc',
   notes text not null default '',
   ledger_date date not null default current_date,
   cashflow_month date,
