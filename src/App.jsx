@@ -740,7 +740,7 @@ function AddBankAccountModal({ form, setForm, editingAccount, save, busy, close 
 }
 
 function BankAccountWorkspace({ accounts, account, ledger, month, setMonth, openEditAccount, openTransfer, openNewLedger, updateLedgerAmountInline, swapLedgerItemAmounts, ledgerForm, changeLedgerForm, swapLedgerAmounts, saveLedgerItem, ledgerBusy, editingLedger, editLedgerItem, deleteLedgerItem, copyRecurringLedger, cancelLedgerEdit, close }) {
-  const [ledgerSortDirection, setLedgerSortDirection] = useState('newest')
+  const [ledgerSortDirection, setLedgerSortDirection] = useState('oldest')
   const [ledgerAmountFilter, setLedgerAmountFilter] = useState('')
   const [ledgerDescriptionFilter, setLedgerDescriptionFilter] = useState('')
   const [ledgerTypeFilter, setLedgerTypeFilter] = useState('all')
