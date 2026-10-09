@@ -40,10 +40,8 @@ Deno.serve(async (request) => {
     if (!category) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'unsupported_type', type }); return json({ error: 'Unsupported transaction type: ' + type }, 400) }
     if (!validDate(transactionDate)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_date' }); return json({ error: 'Each transaction needs transaction_date in YYYY-MM-DD format.' }, 400) }
     if (!Number.isFinite(amount)) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'invalid_amount' }); return json({ error: 'Each transaction needs a numeric amount.' }, 400) }
-    const statementMonth = entry?.statement_month || monthForDate(transactionDate)
     const cashflowMonth = entry?.cashflow_month === null ? null : (entry?.cashflow_month || monthForDate(transactionDate))
     if (cashflowMonth && !/^\d{4}-\d{2}-01$/.test(cashflowMonth)) return json({ error: 'cashflow_month must be YYYY-MM-01 or null.' }, 400)
-    if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
     let cardId = entry?.card_id
     if (!cardId && entry?.card_name) {
       const { data: cards } = await client.from('credit_cards').select('id, name').eq('user_id', keyRecord.user_id).ilike('name', String(entry.card_name))
@@ -51,8 +49,10 @@ Deno.serve(async (request) => {
       cardId = cards[0].id
     }
     if (!cardId) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'missing_card' }); return json({ error: 'Each transaction needs card_id or card_name.' }, 400) }
-    const { data: card } = await client.from('credit_cards').select('id').eq('id', cardId).eq('user_id', keyRecord.user_id).maybeSingle()
+    const { data: card } = await client.from('credit_cards').select('id, default_statement_month').eq('id', cardId).eq('user_id', keyRecord.user_id).maybeSingle()
     if (!card) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'card_not_owned' }); return json({ error: 'Card not found for this API key owner.' }, 400) }
+    const statementMonth = entry?.statement_month || card.default_statement_month?.slice(0, 10) || monthForDate(transactionDate)
+    if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
     rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth, notes, recurring })
   }
 
