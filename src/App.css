@@ -272,3 +272,5 @@
 
 .ledger-row{grid-template-columns:auto minmax(0,1.25fr) minmax(170px,.7fr) auto}.ledger-drag-handle{display:grid;place-items:center;width:1.25rem;color:var(--bs-secondary-color);cursor:grab;user-select:none;font-size:1.1rem;letter-spacing:-.15em}.ledger-drag-handle:active{cursor:grabbing}.transaction-row-actions .btn{min-width:30px}
 @media(max-width:700px){.ledger-row{grid-template-columns:1fr}.ledger-drag-handle{justify-self:start}.ledger-amounts{grid-column:1}.ledger-row .transaction-row-actions{grid-column:1}}
+
+.ledger-category-inline{width:auto;max-width:150px;min-width:100px;margin-top:.15rem;padding:.15rem 1.5rem .15rem .35rem;border:0;background-color:transparent;color:var(--bs-secondary-color);font-size:.72rem;font-weight:600}.ledger-category-inline:focus{border:1px solid var(--bs-primary);box-shadow:none}.ledger-row-main .ledger-category-inline{display:block}
