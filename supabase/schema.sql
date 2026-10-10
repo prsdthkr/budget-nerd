@@ -175,9 +175,9 @@ create policy "Users can manage their own card cashback assignments" on public.c
 drop policy if exists "Users can read their own card transactions" on public.card_transactions;
 create policy "Users can read their own card transactions" on public.card_transactions for select to authenticated using ((select auth.uid()) = user_id);
 drop policy if exists "Users can add their own card transactions" on public.card_transactions;
-create policy "Users can add their own card transactions" on public.card_transactions for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())));
+create policy "Users can add their own card transactions" on public.card_transactions for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())) and (cashback_category_id is null or exists (select 1 from public.cashback_categories where id = cashback_category_id and user_id = (select auth.uid()))));
 drop policy if exists "Users can update their own card transactions" on public.card_transactions;
-create policy "Users can update their own card transactions" on public.card_transactions for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())));
+create policy "Users can update their own card transactions" on public.card_transactions for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())) and (cashback_category_id is null or exists (select 1 from public.cashback_categories where id = cashback_category_id and user_id = (select auth.uid()))));
 drop policy if exists "Users can delete their own card transactions" on public.card_transactions;
 create policy "Users can delete their own card transactions" on public.card_transactions for delete to authenticated using ((select auth.uid()) = user_id);
 
