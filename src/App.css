@@ -327,3 +327,5 @@
 .statement-total-values{display:flex!important;align-items:baseline;gap:.65rem;flex-wrap:wrap}.statement-total-values .statement-cashback-total{color:var(--bs-success-text-emphasis);font-size:.78rem;font-weight:650;white-space:nowrap}
 
 .cashback-assignment-row .react-datepicker-wrapper{display:block;width:100%;min-width:0}.cashback-assignment-row .react-datepicker-wrapper .form-control{width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.react-datepicker__portal{z-index:2000!important}
+
+.cashback-info-progress{display:grid;gap:.3rem;margin-top:.5rem}.cashback-info-progress>div{display:flex;justify-content:space-between;gap:.5rem;color:var(--bs-secondary-color);font-size:.75rem}.cashback-info-progress strong{color:var(--bs-body-color)}.cashback-info-progress .progress{height:.45rem}
