@@ -1220,7 +1220,7 @@ function ColorPicker({ label, value, onChange }) {
 function cashbackAmountForTransaction(amount, date, categoryId, assignments, categories, transactions = [], excludeTransactionId = '', cardId = '') {
   const numericAmount = Number(String(amount ?? '').replace(/[$,]/g, '').trim())
   if (!categoryId || !date || !Number.isFinite(numericAmount) || numericAmount <= 0) return 0
-  const assignment = assignments.find((item) => item.cashback_category_id === categoryId && (!item.starts_on || date >= item.starts_on) && (!item.ends_on || date <= item.ends_on))
+  const assignment = assignments.filter((item) => item.cashback_category_id === categoryId && (!item.starts_on || date >= item.starts_on) && (!item.ends_on || date <= item.ends_on)).sort((left, right) => String(right.starts_on || '').localeCompare(String(left.starts_on || '')))[0]
   const category = categories.find((item) => item.id === categoryId)
   if (!assignment || !category) return 0
   const calculated = numericAmount * Number(category.percentage || 0) / 100
