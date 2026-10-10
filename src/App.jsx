@@ -29,7 +29,7 @@ const ACCOUNT_CURRENCIES = [
 ]
 
 
-const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', recurring: false, date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth })
+const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', recurring: false, date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth, cashbackCategoryId: '' })
 
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
@@ -75,6 +75,8 @@ export default function App() {
   const [cards, setCards] = useState([])
   const [transactionTypesVersion, setTransactionTypesVersion] = useState(0)
   const [cardsLoading, setCardsLoading] = useState(false)
+  const [cashbackCategories, setCashbackCategories] = useState([])
+  const [cardCashbackAssignments, setCardCashbackAssignments] = useState([])
   const [cardName, setCardName] = useState('')
   const [cardColor, setCardColor] = useState(CARD_COLORS[0].value)
   const [cardDefaultCategory, setCardDefaultCategory] = useState('misc')
@@ -160,11 +162,14 @@ export default function App() {
     if (session) {
       loadTransactionCategories()
       loadCards()
+      loadCashbackData()
       loadAllTransactions()
       loadCategoryLimits()
       loadBankData()
     } else {
       setCards([])
+      setCashbackCategories([])
+      setCardCashbackAssignments([])
       setAllTransactions([])
       setActivityTransactions([])
       setCategoryLimits({})
@@ -192,6 +197,19 @@ export default function App() {
     }
   }
 
+  const loadCashbackData = async () => {
+    const [categoriesResponse, assignmentsResponse] = await Promise.all([
+      supabase.from('cashback_categories').select('id, name, emoji, percentage, created_at').order('name', { ascending: true }),
+      supabase.from('card_cashback_assignments').select('id, card_id, cashback_category_id, starts_on, ends_on, max_cashback, created_at').order('starts_on', { ascending: true }),
+    ])
+    if (categoriesResponse.error) return setNotice({ type: 'error', text: categoriesResponse.error.message })
+    if (assignmentsResponse.error) return setNotice({ type: 'error', text: assignmentsResponse.error.message })
+    const categories = categoriesResponse.data || []
+    const categoryMap = new Map(categories.map((category) => [category.id, category]))
+    setCashbackCategories(categories)
+    setCardCashbackAssignments((assignmentsResponse.data || []).map((assignment) => ({ ...assignment, category: categoryMap.get(assignment.cashback_category_id) || null })))
+  }
+
   const loadCards = async () => {
     setCardsLoading(true)
     const response = await supabase.from('credit_cards').select('id, name, color, default_category, statement_day, due_day, default_statement_month, sort_order, created_at').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
@@ -202,7 +220,7 @@ export default function App() {
 
   const loadTransactions = async (cardId) => {
     setTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').eq('card_id', cardId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions(response.data || [])
@@ -210,7 +228,7 @@ export default function App() {
 
   const loadAllTransactions = async () => {
     setAllTransactionsLoading(true)
-    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    const response = await supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     setAllTransactionsLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions(response.data || [])
@@ -424,7 +442,7 @@ export default function App() {
   const loadActivityTransactions = async (filters = activityFilters) => {
     setActivityLoading(true)
     const hasFilters = Object.values(filters).some(Boolean)
-    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+    let query = supabase.from('card_transactions').select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
     if (filters.name.trim()) query = query.ilike('name', '%' + filters.name.trim() + '%')
     if (filters.amount !== '') {
       const amount = Number(filters.amount)
@@ -650,7 +668,9 @@ export default function App() {
       amount,
       statement_month: statementMonth + '-01',
       cashflow_month: transactionForm.cashflowMonth ? transactionForm.cashflowMonth + '-01' : null,
-    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').single()
+      cashback_category_id: transactionForm.cashbackCategoryId || null,
+      cashback_amount: cashbackAmountForTransaction(transactionForm.amount, date, transactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories),
+    }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').single()
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [response.data, ...current])
@@ -662,7 +682,7 @@ export default function App() {
 
   const openEditTransaction = (transaction) => {
     setEditingTransaction(transaction)
-    setEditTransactionForm({ type: transaction.type, name: transaction.name, notes: transaction.notes || '', recurring: Boolean(transaction.recurring), date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : formatIsoMonth(new Date()) })
+    setEditTransactionForm({ type: transaction.type, name: transaction.name, notes: transaction.notes || '', recurring: Boolean(transaction.recurring), date: transaction.transaction_date, amount: String(transaction.amount), statementMonth: transaction.statement_month.slice(0, 7), cashflowMonth: transaction.cashflow_month ? transaction.cashflow_month.slice(0, 7) : '', cashbackCategoryId: transaction.cashback_category_id || '' })
     setNotice(null)
   }
 
@@ -678,7 +698,7 @@ export default function App() {
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     setEditBusy(true)
     setNotice(null)
-    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), recurring: editTransactionForm.recurring, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at').single()
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), recurring: editTransactionForm.recurring, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null, cashback_category_id: editTransactionForm.cashbackCategoryId || null, cashback_amount: cashbackAmountForTransaction(editTransactionForm.amount, date, editTransactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories) }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').single()
     setEditBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
@@ -721,7 +741,7 @@ export default function App() {
     setNotice(null)
     const nextStatementMonth = nextMonthDate(statementMonth + '-01').slice(0, 7)
     const rows = currentItems.map((item) => ({ card_id: cardId, type: item.type, name: item.name, notes: item.notes || '', recurring: true, recurrence_id: item.recurrence_id, transaction_date: nextMonthDate(item.transaction_date), amount: Number(item.amount), statement_month: nextStatementMonth + '-01', cashflow_month: nextStatementMonth + '-01' }))
-    const response = await supabase.from('card_transactions').upsert(rows, { onConflict: 'card_id,recurrence_id,statement_month', ignoreDuplicates: true }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at')
+    const response = await supabase.from('card_transactions').upsert(rows, { onConflict: 'card_id,recurrence_id,statement_month', ignoreDuplicates: true }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at')
     setRecurringCopyBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setTransactions((current) => [...current, ...(response.data || [])])
