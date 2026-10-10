@@ -299,3 +299,6 @@
 .transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:560px){.transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:1fr}}
 @media(min-width:951px) and (max-width:1050px){.transaction-workspace{grid-template-columns:minmax(190px,.7fr) minmax(260px,.9fr) minmax(260px,1fr)}.transaction-workspace .statement-transactions-panel{grid-column:auto;height:520px;max-height:520px}}
+
+/* Keep the statement panel bounded: controls stay fixed and only the transaction list scrolls. */
+.transaction-workspace .statement-transactions-panel{display:flex;min-height:0;overflow:hidden}.transaction-workspace .statement-transactions-panel .statement-view{display:flex;flex-direction:column;min-height:0;width:100%}.transaction-workspace .statement-transactions-panel .statement-controls,.transaction-workspace .statement-transactions-panel .statement-total{flex:0 0 auto}.transaction-workspace .statement-transactions-panel .statement-transaction-list{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto}
