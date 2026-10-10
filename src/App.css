@@ -321,3 +321,5 @@
 
 .cashback-transaction-fields{border-top:0;padding-top:0;margin-top:0}.cashback-transaction-field{display:grid;gap:.35rem}.transaction-edit-form .cashback-transaction-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.transaction-edit-form .edit-actions{align-items:center;justify-content:flex-start}.transaction-edit-form .edit-recurring-toggle{margin:0 auto 0 0}
 @media(max-width:600px){.transaction-edit-form .cashback-transaction-fields{grid-template-columns:1fr}}
+
+.cashback-category-create-form{display:grid;gap:.75rem}.cashback-category-create-form .form-label{margin-bottom:.35rem}
