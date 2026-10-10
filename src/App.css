@@ -313,3 +313,5 @@
 @media(max-width:600px){.transaction-edit-modal-dialog{width:100%;max-width:100%;margin:.5rem auto}.transaction-edit-modal-dialog .modal-body{max-height:calc(100vh - 5rem)}.transaction-edit-two-column{grid-template-columns:1fr}}
 
 .card-cashback-icon{width:auto!important;min-width:30px;padding:.15rem .35rem;white-space:nowrap;letter-spacing:.05em}
+
+.card-cashback-icon,.card-cashback-icon.btn-light{background-color:rgba(15,23,42,.82)!important;color:#fff!important;border-color:rgba(255,255,255,.45)!important}.card-cashback-icon:hover,.card-cashback-icon:focus-visible{background-color:#0f172a!important;color:#fff!important;border-color:rgba(255,255,255,.75)!important}
