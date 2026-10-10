@@ -1213,6 +1213,23 @@ function ColorPicker({ label, value, onChange }) {
   return <div className="color-picker"><span className="field-label">{label}</span><div className="color-options" role="radiogroup" aria-label={label}>{CARD_COLORS.map((color) => <Button type="button" key={color.value} className={value === color.value ? 'color-swatch selected' : 'color-swatch'} style={{ background: color.value }} title={color.name} aria-label={color.name} aria-checked={value === color.value} role="radio" onClick={() => onChange(color.value)}><span>{value === color.value ? '✓' : ''}</span></Button>)}</div></div>
 }
 
+function cashbackAmountForTransaction(amount, date, categoryId, assignments, categories) {
+  const numericAmount = Number(String(amount ?? '').replace(/[$,]/g, '').trim())
+  if (!categoryId || !date || !Number.isFinite(numericAmount) || numericAmount <= 0) return 0
+  const assignment = assignments.find((item) => item.cashback_category_id === categoryId && (!item.starts_on || date >= item.starts_on) && (!item.ends_on || date <= item.ends_on))
+  const category = categories.find((item) => item.id === categoryId)
+  if (!assignment || !category) return 0
+  const calculated = numericAmount * Number(category.percentage || 0) / 100
+  const capped = assignment.max_cashback === null || assignment.max_cashback === undefined ? calculated : Math.min(calculated, Number(assignment.max_cashback))
+  return Math.round(Math.max(0, capped) * 100) / 100
+}
+
+function CashbackFields({ cardId, date, amount, categoryId, assignments, categories, onCategoryChange }) {
+  const options = assignments.filter((assignment) => assignment.card_id === cardId && (!assignment.starts_on || date >= assignment.starts_on) && (!assignment.ends_on || date <= assignment.ends_on) && categories.some((category) => category.id === assignment.cashback_category_id))
+  const cashbackAmount = cashbackAmountForTransaction(amount, date, categoryId, assignments, categories)
+  return <div className="cashback-transaction-fields"><Form.Label htmlFor="transaction-cashback-category">Cashback category (optional)</Form.Label><Form.Select id="transaction-cashback-category" value={options.some((assignment) => assignment.cashback_category_id === categoryId) ? categoryId : ''} onChange={(event) => onCategoryChange(event.target.value)}><option value="">No cashback</option>{options.map((assignment) => { const category = categories.find((item) => item.id === assignment.cashback_category_id); return <option value={assignment.cashback_category_id} key={assignment.id}>{category.emoji} {category.name} · {Number(category.percentage)}%</option> })}</Form.Select><Form.Label htmlFor="transaction-cashback-amount">Cashback amount</Form.Label><InputGroup><InputGroup.Text>$</InputGroup.Text><Form.Control id="transaction-cashback-amount" type="text" inputMode="decimal" value={cashbackAmount.toFixed(2)} readOnly aria-readonly="true" /></InputGroup></div>
+}
+
 function CardDetailModal({ card, statementSummary, bankAccounts, refreshTransactions, bankLedger, planCardPayment, paymentBusy, copyRecurringTransactions, recurringCopyBusy, selectedCardDefaultStatementMonth, setSelectedCardDefaultStatementMonth, saveDefaultStatementMonth, defaultMonthBusy, statementMonthFilter, setStatementMonthFilter, openPreferences, closeCard, transactions, transactionsLoading, transactionForm, changeTransaction, addTransaction, transactionBusy, transactionSuggestions, openEditTransaction, deleteTransaction }) {
   return <Modal show onHide={closeCard} centered size="xl" dialogClassName="transaction-modal-dialog" scrollable>
     <Modal.Header closeButton><Modal.Title><span className="eyebrow d-block">Card workspace</span>{card.name}</Modal.Title></Modal.Header>
