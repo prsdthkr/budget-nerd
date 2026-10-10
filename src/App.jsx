@@ -766,7 +766,7 @@ export default function App() {
     setRecurringCopyBusy(true)
     setNotice(null)
     const nextStatementMonth = nextMonthDate(statementMonth + '-01').slice(0, 7)
-    const rows = currentItems.map((item) => ({ card_id: cardId, type: item.type, name: item.name, notes: item.notes || '', recurring: true, recurrence_id: item.recurrence_id, transaction_date: nextMonthDate(item.transaction_date), amount: Number(item.amount), statement_month: nextStatementMonth + '-01', cashflow_month: nextStatementMonth + '-01' }))
+    const rows = currentItems.map((item) => { const nextDate = nextMonthDate(item.transaction_date); const cashbackAmount = cashbackAmountForTransaction(item.amount, nextDate, item.cashback_category_id, cardCashbackAssignments, cashbackCategories, allTransactions, '', cardId); return { card_id: cardId, type: item.type, name: item.name, notes: item.notes || '', recurring: true, recurrence_id: item.recurrence_id, transaction_date: nextDate, amount: Number(item.amount), statement_month: nextStatementMonth + '-01', cashflow_month: nextStatementMonth + '-01', cashback_category_id: cashbackAmount > 0 ? item.cashback_category_id : null, cashback_amount: cashbackAmount } })
     const response = await supabase.from('card_transactions').upsert(rows, { onConflict: 'card_id,recurrence_id,statement_month', ignoreDuplicates: true }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at')
     setRecurringCopyBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
