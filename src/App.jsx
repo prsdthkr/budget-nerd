@@ -678,6 +678,8 @@ export default function App() {
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) {
       return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     }
+    const cashbackAmount = cashbackAmountForTransaction(transactionForm.amount, date, transactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories)
+    const cashbackCategoryId = cashbackAmount > 0 ? transactionForm.cashbackCategoryId : null
     setTransactionBusy(true)
     setNotice(null)
     const response = await supabase.from('card_transactions').insert({
@@ -690,8 +692,8 @@ export default function App() {
       amount,
       statement_month: statementMonth + '-01',
       cashflow_month: transactionForm.cashflowMonth ? transactionForm.cashflowMonth + '-01' : null,
-      cashback_category_id: transactionForm.cashbackCategoryId || null,
-      cashback_amount: cashbackAmountForTransaction(transactionForm.amount, date, transactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories),
+      cashback_category_id: cashbackCategoryId,
+      cashback_amount: cashbackAmount,
     }).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').single()
     setTransactionBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
@@ -718,9 +720,11 @@ export default function App() {
     const statementMonth = editTransactionForm.statementMonth || formatIsoMonth(new Date())
     const amount = Number(String(editTransactionForm.amount ?? '').replace(/[$,]/g, '').trim())
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
+    const cashbackAmount = cashbackAmountForTransaction(editTransactionForm.amount, date, editTransactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories)
+    const cashbackCategoryId = cashbackAmount > 0 ? editTransactionForm.cashbackCategoryId : null
     setEditBusy(true)
     setNotice(null)
-    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), recurring: editTransactionForm.recurring, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null, cashback_category_id: editTransactionForm.cashbackCategoryId || null, cashback_amount: cashbackAmountForTransaction(editTransactionForm.amount, date, editTransactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories) }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').single()
+    const response = await supabase.from('card_transactions').update({ type: editTransactionForm.type, name, notes: editTransactionForm.notes.trim(), recurring: editTransactionForm.recurring, transaction_date: date, amount, statement_month: statementMonth + '-01', cashflow_month: editTransactionForm.cashflowMonth ? editTransactionForm.cashflowMonth + '-01' : null, cashback_category_id: cashbackCategoryId, cashback_amount: cashbackAmount }).eq('id', editingTransaction.id).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at').single()
     setEditBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setAllTransactions((current) => current.map((item) => item.id === response.data.id ? response.data : item))
