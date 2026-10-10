@@ -29,6 +29,16 @@ create table if not exists public.credit_cards (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.cashback_categories (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null check (char_length(btrim(name)) between 1 and 80),
+  emoji text not null default '💰' check (char_length(btrim(emoji)) between 1 and 8),
+  percentage numeric(7, 4) not null check (percentage >= 0 and percentage <= 100),
+  created_at timestamptz not null default now(),
+  unique (user_id, name)
+);
+
 create table if not exists public.bank_accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -85,12 +95,30 @@ create table if not exists public.card_transactions (
   amount numeric(12, 2) not null,
   statement_month date not null check (statement_month = date_trunc('month', statement_month)::date),
   cashflow_month date null default date_trunc('month', current_date)::date check (cashflow_month is null or cashflow_month = date_trunc('month', cashflow_month)::date),
+  cashback_category_id uuid references public.cashback_categories(id) on delete set null,
+  cashback_amount numeric(12, 2) not null default 0 check (cashback_amount >= 0),
   notes text not null default '',
   recurring boolean not null default false,
   recurrence_id uuid not null default gen_random_uuid(),
   created_at timestamptz not null default now(),
   unique (card_id, recurrence_id, statement_month)
 );
+
+create table if not exists public.card_cashback_assignments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  card_id uuid not null references public.credit_cards(id) on delete cascade,
+  cashback_category_id uuid not null references public.cashback_categories(id) on delete cascade,
+  starts_on date,
+  ends_on date,
+  max_cashback numeric(12, 2) check (max_cashback is null or max_cashback >= 0),
+  created_at timestamptz not null default now(),
+  check (starts_on is null or ends_on is null or ends_on >= starts_on)
+);
+
+create index if not exists cashback_categories_user_idx on public.cashback_categories(user_id, name);
+create index if not exists card_cashback_assignments_card_idx on public.card_cashback_assignments(card_id, starts_on, ends_on);
+create index if not exists card_transactions_cashback_category_idx on public.card_transactions(cashback_category_id);
 
 create index if not exists credit_cards_user_sort_idx on public.credit_cards (user_id, sort_order, created_at);
 create index if not exists card_transactions_user_date_idx on public.card_transactions (user_id, transaction_date desc, created_at desc);
@@ -100,11 +128,15 @@ alter table public.profiles enable row level security;
 alter table public.pings enable row level security;
 alter table public.credit_cards enable row level security;
 alter table public.card_transactions enable row level security;
+alter table public.cashback_categories enable row level security;
+alter table public.card_cashback_assignments enable row level security;
 
 grant select on public.profiles to authenticated;
 grant select, insert on public.pings to authenticated;
 grant select, insert, update, delete on public.credit_cards to authenticated;
 grant select, insert, update, delete on public.card_transactions to authenticated;
+grant select, insert, update, delete on public.cashback_categories to authenticated;
+grant select, insert, update, delete on public.card_cashback_assignments to authenticated;
 grant select, insert, update, delete on public.bank_accounts to authenticated;
 grant select, insert, update, delete on public.account_ledger_items to authenticated;
 grant select, insert, update, delete on public.category_limits to authenticated;
@@ -134,6 +166,11 @@ drop policy if exists "Users can read their own category limits" on public.categ
 create policy "Users can read their own category limits" on public.category_limits for select to authenticated using ((select auth.uid()) = user_id);
 drop policy if exists "Users can manage their own category limits" on public.category_limits;
 create policy "Users can manage their own category limits" on public.category_limits for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can manage their own cashback categories" on public.cashback_categories;
+create policy "Users can manage their own cashback categories" on public.cashback_categories for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "Users can manage their own card cashback assignments" on public.card_cashback_assignments;
+create policy "Users can manage their own card cashback assignments" on public.card_cashback_assignments for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id and exists (select 1 from public.credit_cards where id = card_id and user_id = (select auth.uid())) and exists (select 1 from public.cashback_categories where id = cashback_category_id and user_id = (select auth.uid())));
 
 drop policy if exists "Users can read their own card transactions" on public.card_transactions;
 create policy "Users can read their own card transactions" on public.card_transactions for select to authenticated using ((select auth.uid()) = user_id);
