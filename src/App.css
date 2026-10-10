@@ -292,3 +292,10 @@
 
 .todo-row-editing{align-items:start}.todo-edit-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;min-width:0}.todo-edit-name{grid-column:1/-1}.todo-edit-amount{min-width:0}.todo-row-editing .todo-date .react-datepicker-wrapper,.todo-row-editing .todo-date .form-control{width:100%;min-width:0}.todo-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:.35rem;flex-wrap:wrap}.todo-row-actions .btn{white-space:nowrap}
 @media(max-width:700px){.todo-row-editing .todo-edit-meta{grid-template-columns:1fr}.todo-row-editing .todo-edit-name{grid-column:auto}}
+
+/* Card payment planner is now in the narrow preferences column. */
+.transaction-workspace .card-preferences-column .card-payment-controls{align-items:stretch;flex-direction:column}.transaction-workspace .card-preferences-column .card-payment-controls .btn{width:100%}
+/* Use three compact columns for statement transaction filters in the statement column. */
+.transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:560px){.transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:1fr}}
+@media(min-width:951px) and (max-width:1050px){.transaction-workspace{grid-template-columns:minmax(190px,.7fr) minmax(260px,.9fr) minmax(260px,1fr)}.transaction-workspace .statement-transactions-panel{grid-column:auto;height:520px;max-height:520px}}
