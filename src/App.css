@@ -287,3 +287,5 @@
 /* The statement workspace now replaces the recent-transactions panel in the single card view. */
 .transaction-workspace .statement-transactions-panel{grid-column:auto;min-width:0}.transaction-workspace .statement-transactions-panel .statement-view{padding-top:0}.transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:1fr}.transaction-workspace .statement-transactions-panel .statement-total{align-items:flex-start;flex-direction:column}.transaction-workspace .statement-transactions-panel .card-payment-controls{align-items:stretch;flex-direction:column}.transaction-workspace .statement-transactions-panel .card-payment-controls .btn{width:100%}.transaction-workspace .statement-transactions-panel .statement-transaction-list{max-height:460px}
 @media(max-width:560px){.transaction-workspace .statement-transactions-panel .statement-controls{grid-template-columns:1fr}}
+
+@media(min-width:951px) and (max-width:1050px){.transaction-workspace{grid-template-columns:minmax(190px,.7fr) minmax(260px,.9fr) minmax(260px,1fr)}.transaction-workspace .statement-transactions-panel{grid-column:auto;height:520px;max-height:520px}}
