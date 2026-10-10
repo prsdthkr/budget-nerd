@@ -323,3 +323,5 @@
 @media(max-width:600px){.transaction-edit-form .cashback-transaction-fields{grid-template-columns:1fr}}
 
 .cashback-category-create-form{display:grid;gap:.75rem}.cashback-category-create-form .form-label{margin-bottom:.35rem}
+
+.statement-total-values{display:flex!important;align-items:baseline;gap:.65rem;flex-wrap:wrap}.statement-total-values .statement-cashback-total{color:var(--bs-success-text-emphasis);font-size:.78rem;font-weight:650;white-space:nowrap}
