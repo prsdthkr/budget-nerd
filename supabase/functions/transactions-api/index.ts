@@ -53,7 +53,25 @@ Deno.serve(async (request) => {
     if (!card) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'card_not_owned' }); return json({ error: 'Card not found for this API key owner.' }, 400) }
     const statementMonth = entry?.statement_month || card.default_statement_month?.slice(0, 10) || monthForDate(transactionDate)
     if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
-    rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth, notes, recurring })
+    const requestedCashbackCategoryId = entry?.cashback_category_id || null
+    let cashbackCategoryId = null
+    let cashbackAmount = 0
+    if (requestedCashbackCategoryId) {
+      const { data: cashbackCategory } = await client.from('cashback_categories').select('id, percentage').eq('id', requestedCashbackCategoryId).eq('user_id', keyRecord.user_id).maybeSingle()
+      const { data: assignments } = await client.from('card_cashback_assignments').select('id, cashback_category_id, starts_on, ends_on, max_cashback').eq('card_id', cardId).eq('cashback_category_id', requestedCashbackCategoryId).eq('user_id', keyRecord.user_id).order('starts_on', { ascending: false })
+      const assignment = (assignments || []).find((item) => (!item.starts_on || transactionDate >= item.starts_on) && (!item.ends_on || transactionDate <= item.ends_on))
+      if (!cashbackCategory || !assignment) return json({ error: 'cashback_category_id is not assigned to this card for the transaction date.' }, 400)
+      let usedQuery = client.from('card_transactions').select('cashback_amount').eq('card_id', cardId).eq('cashback_category_id', requestedCashbackCategoryId)
+      if (assignment.starts_on) usedQuery = usedQuery.gte('transaction_date', assignment.starts_on)
+      if (assignment.ends_on) usedQuery = usedQuery.lte('transaction_date', assignment.ends_on)
+      const { data: usedRows } = await usedQuery
+      const used = (usedRows || []).reduce((sum, row) => sum + Number(row.cashback_amount || 0), 0)
+      const calculated = Math.max(0, amount) * Number(cashbackCategory.percentage || 0) / 100
+      const remaining = assignment.max_cashback === null || assignment.max_cashback === undefined ? calculated : Math.max(0, Number(assignment.max_cashback) - used)
+      cashbackAmount = Math.round(Math.min(calculated, remaining) * 100) / 100
+      cashbackCategoryId = cashbackAmount > 0 ? requestedCashbackCategoryId : null
+    }
+    rows.push({ user_id: keyRecord.user_id, card_id: cardId, type, name, transaction_date: transactionDate, amount, statement_month: statementMonth, cashflow_month: cashflowMonth, cashback_category_id: cashbackCategoryId, cashback_amount: cashbackAmount, notes, recurring })
   }
 
   const duplicateKey = (name, date, amount) => name.trim().toLowerCase() + '|' + date + '|' + Number(amount).toFixed(2)
@@ -69,7 +87,7 @@ Deno.serve(async (request) => {
     log('transactions_skipped_as_duplicates', { user_id: keyRecord.user_id, skipped })
     return json({ inserted: 0, skipped, transactions: [] }, 200)
   }
-  const { data, error } = await client.from('card_transactions').insert(rowsToInsert).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, notes, recurring, recurrence_id, created_at')
+  const { data, error } = await client.from('card_transactions').insert(rowsToInsert).select('id, card_id, type, name, transaction_date, amount, statement_month, cashflow_month, cashback_category_id, cashback_amount, notes, recurring, recurrence_id, created_at')
   if (error) { log('insert_failed', { user_id: keyRecord.user_id, count: rowsToInsert.length, error: error.message }); return json({ error: error.message }, 500) }
   log('transactions_inserted', { user_id: keyRecord.user_id, inserted: data?.length || 0, skipped })
   await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
