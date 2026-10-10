@@ -311,3 +311,5 @@
 
 .transaction-edit-modal-dialog{width:calc(100vw - 2rem);max-width:860px}.transaction-edit-modal-dialog .modal-body{max-height:calc(100vh - 7rem);overflow-y:auto}.transaction-edit-form{display:grid;grid-template-columns:minmax(0,1fr);gap:.75rem}.transaction-edit-form .transaction-types{margin-bottom:0}.transaction-edit-two-column{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.transaction-edit-form .form-group{min-width:0}.transaction-edit-form .react-datepicker-wrapper{width:100%}.transaction-edit-form .edit-actions{margin-top:0}
 @media(max-width:600px){.transaction-edit-modal-dialog{width:100%;max-width:100%;margin:.5rem auto}.transaction-edit-modal-dialog .modal-body{max-height:calc(100vh - 5rem)}.transaction-edit-two-column{grid-template-columns:1fr}}
+
+.card-cashback-icon{width:auto!important;min-width:30px;padding:.15rem .35rem;white-space:nowrap;letter-spacing:.05em}
