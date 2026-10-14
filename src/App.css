@@ -384,3 +384,5 @@
   .ledger-row .ledger-amounts{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:flex-start;gap:.5rem;text-align:left;white-space:normal}
   .ledger-row .transaction-row-actions{grid-column:2;grid-row:3;width:100%;margin:0;justify-content:flex-start}
 }
+
+@media(max-width:760px){.side-nav>.nav-secondary-item{display:none!important}.side-nav>.nav-more-item{display:flex!important}}
