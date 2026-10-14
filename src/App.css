@@ -411,3 +411,6 @@
 .cashback-category-create-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-top:.25rem}.cashback-category-create-actions .btn{width:100%}
 
 @media(max-width:700px){.todo-row{grid-template-columns:75px minmax(0,1fr);align-items:start;gap:.65rem}.todo-row .todo-date{grid-column:1;grid-row:1 / span 2}.todo-row .todo-item-meta{grid-column:2;grid-row:1}.todo-row .todo-amount{grid-column:2;grid-row:2;text-align:left}.todo-row .todo-row-actions{grid-column:2;grid-row:3;justify-content:flex-start;width:100%;margin:0}.todo-row-editing .todo-edit-meta{grid-column:2;grid-row:1}.todo-row-editing .todo-edit-amount{grid-column:2;grid-row:2}.todo-row-editing .todo-row-actions{grid-column:2;grid-row:3;justify-content:flex-start;width:100%}}
+
+.sidebar .nav-item:not(.active),.sidebar .nav-item:not(.active):hover{background:transparent!important}.sidebar .nav-item.active{background:#2a3852!important}
+@media(min-width:761px){.app-shell{grid-template-columns:250px minmax(0,1fr)}.sidebar{position:fixed;inset:0 auto 0 0;z-index:1030;width:250px;min-height:100vh;height:100vh;overflow-y:auto}.content-shell{grid-column:2;min-width:0;width:100%}.side-nav{min-height:0}}
