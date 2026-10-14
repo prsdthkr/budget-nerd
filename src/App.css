@@ -347,3 +347,7 @@
   .nav-signout::before{content:'↪';font-size:1.25rem;line-height:1}
   .nav-signout:hover{background:#2a3852;text-decoration:none}
 }
+
+/* Plan account tabs: scroll only the tab strip, not the active workspace content. */
+.plan-account-tabs{display:block!important;flex:none!important;width:100%;max-width:100%;overflow:visible}.plan-account-tabs>.nav-tabs{display:flex!important;flex-wrap:nowrap!important;align-items:flex-end;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}.plan-account-tabs>.nav-tabs .nav-item{flex:0 0 auto;width:auto!important}.plan-account-tabs>.nav-tabs .nav-link{white-space:nowrap}.plan-account-tabs>.tab-content{display:block!important;width:100%;min-width:0;overflow:visible}.plan-account-tabs>.tab-content>.tab-pane{width:100%;min-width:0}
+@media(max-width:760px){.plan-account-tabs>.nav-tabs{padding-bottom:.15rem}.plan-account-tabs>.tab-content{padding-top:.75rem}}
