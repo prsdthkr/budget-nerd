@@ -403,3 +403,5 @@
 
 .credit-card .card-body{position:relative;overflow:hidden}.card-art-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.7;z-index:0}.credit-card .card-body>.card-heading-inline,.credit-card .card-body>.statement-summary,.credit-card .card-body>.compact-card-summary{position:relative;z-index:1}
 .card-image-url-preview{display:block;width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-top:.6rem}
+
+.card-art-overlay{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.62))}.credit-card.has-card-art .card-art-image{opacity:.86}.credit-card.has-card-art .card-title,.credit-card.has-card-art .statement-summary,.credit-card.has-card-art .compact-card-summary,.credit-card.has-card-art .card-fx-badge{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
