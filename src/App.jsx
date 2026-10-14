@@ -976,10 +976,12 @@ function BankAccountWorkspace({ accounts, account, ledger, month, setMonth, open
   }
   const handleLedgerDrop = async (event, item) => {
     event.preventDefault()
-    if (!draggingLedgerId || !dropTarget || draggingLedgerId === item.id) return
-    const target = { ...dropTarget }
+    if (!draggingLedgerId || draggingLedgerId === item.id) return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const fallbackPosition = event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after'
+    const position = dropTarget?.id === item.id ? dropTarget.position : fallbackPosition
     setDropTarget(null)
-    await moveLedgerItem({ itemId: draggingLedgerId, targetId: item.id, position: target.position, month })
+    await moveLedgerItem({ itemId: draggingLedgerId, targetId: item.id, position, month })
     setDraggingLedgerId(null)
   }
 
