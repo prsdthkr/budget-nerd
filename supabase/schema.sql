@@ -25,6 +25,7 @@ create table if not exists public.credit_cards (
   statement_day smallint null check (statement_day is null or statement_day between 1 and 31),
   due_day smallint null check (due_day is null or due_day between 1 and 31),
   no_forex boolean not null default false,
+  image_url text,
   default_statement_month date null check (default_statement_month is null or default_statement_month = date_trunc('month', default_statement_month)::date),
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
