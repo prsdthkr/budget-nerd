@@ -393,3 +393,6 @@
 @media(max-width:760px){.transaction-types{display:flex!important;flex-wrap:wrap;gap:.35rem;margin-bottom:.35rem}.transaction-types .transaction-type{display:inline-flex;flex:0 0 auto;flex-direction:row;min-height:0;padding:.35rem .6rem;border-radius:999px}.transaction-types .transaction-type span{display:none}.transaction-types .transaction-type small{font-size:.75rem;line-height:1.1}}
 
 .card-name-block{display:flex;flex-direction:column;min-width:0}.card-fx-badge{align-self:flex-start;margin-bottom:.12rem;padding:.08rem .28rem;border:1px solid currentColor;border-radius:4px;color:var(--card-foreground,#fff);font-size:.58rem;font-weight:800;letter-spacing:.08em;line-height:1;text-transform:lowercase}.card-name-block .card-title{min-width:0}
+
+.transaction-two-column{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.transaction-form .cashback-transaction-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.transaction-form .transaction-form-recurring{grid-column:1/-1;margin-top:.15rem}
+@media(max-width:600px){.transaction-two-column,.transaction-edit-two-column,.transaction-form .cashback-transaction-fields,.transaction-edit-form .cashback-transaction-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
