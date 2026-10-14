@@ -407,3 +407,5 @@
 .card-art-overlay{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.62))}.credit-card.has-card-art .card-art-image{opacity:.86}.credit-card.has-card-art .card-title,.credit-card.has-card-art .statement-summary,.credit-card.has-card-art .compact-card-summary,.credit-card.has-card-art .card-fx-badge{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
 
 .credit-card.has-card-art .card-art-image{filter:blur(2px);transform:scale(1.025)}
+
+.cashback-category-create-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-top:.25rem}.cashback-category-create-actions .btn{width:100%}
