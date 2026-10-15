@@ -419,3 +419,5 @@
 @media(max-width:1100px){.cashflow-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.cashflow-category-grid{grid-template-columns:1fr}}
 
 .card-art-gradient{position:absolute;inset:-2%;z-index:0;background:radial-gradient(circle at 15% 15%,var(--card-art-light,var(--card-color)),transparent 42%),radial-gradient(circle at 85% 80%,var(--card-art-vibrant,var(--card-end-color)),transparent 48%),linear-gradient(135deg,var(--card-art-dark,var(--card-color)),var(--card-art-muted,var(--card-end-color)));filter:blur(2px);transform:scale(1.025)}
+
+.credit-card.has-card-art .card-art-image{filter:blur(1rem);transform:scale(1.08)}
