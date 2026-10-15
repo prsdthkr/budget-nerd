@@ -651,7 +651,7 @@ export default function App() {
     setNotice(null)
   }
 
-  const changeQuickAdd = ({ target }) => setQuickAddForm((current) => target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
+  const changeQuickAdd = ({ target }) => setQuickAddForm((current) => target.type === 'checkbox' ? ({ ...current, [target.name]: target.checked }) : target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
 
   const saveQuickAdd = async (event) => {
     event.preventDefault()
@@ -745,7 +745,7 @@ export default function App() {
     setCards(reordered.map((card, index) => ({ ...card, sort_order: index })))
   }
 
-  const changeTransaction = ({ target }) => setTransactionForm((current) => target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
+  const changeTransaction = ({ target }) => setTransactionForm((current) => target.type === 'checkbox' ? ({ ...current, [target.name]: target.checked }) : target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
 
   const addTransaction = async (event) => {
     event.preventDefault()
@@ -789,7 +789,7 @@ export default function App() {
     setNotice(null)
   }
 
-  const changeEditTransaction = ({ target }) => setEditTransactionForm((current) => target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
+  const changeEditTransaction = ({ target }) => setEditTransactionForm((current) => target.type === 'checkbox' ? ({ ...current, [target.name]: target.checked }) : target.name === 'date' ? ({ ...current, date: target.value, statementMonth: target.value ? target.value.slice(0, 7) : current.statementMonth, cashflowMonth: target.value ? target.value.slice(0, 7) : current.cashflowMonth }) : ({ ...current, [target.name]: target.value }))
 
   const saveTransaction = async (event) => {
     event.preventDefault()
