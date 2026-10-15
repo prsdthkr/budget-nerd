@@ -441,3 +441,6 @@
 
 .cashflow-view>.page-heading{position:sticky;top:0;z-index:20;margin-top:-.5rem;padding:.75rem 0;background:var(--bs-body-bg);border-bottom:1px solid var(--bs-border-color);box-shadow:0 6px 14px rgba(0,0,0,.08)}.cashflow-view>.page-heading .cashflow-month-picker{flex:0 0 auto}
 @media(max-width:760px){.cashflow-view>.page-heading{margin-top:-.25rem;padding:.55rem 0}.cashflow-view>.page-heading .cashflow-month-picker{width:100%}}
+
+.cashflow-view>.page-heading{background:rgba(11,20,36,.96)!important;box-shadow:0 6px 14px rgba(0,0,0,.18)}.cashflow-category-panel{height:340px;min-height:340px;max-height:340px;box-sizing:border-box}.cashflow-category-panel .cashflow-category-items{flex:1 1 auto;align-content:start;overflow:hidden}
+@media(max-width:600px){.cashflow-category-panel{height:300px;min-height:300px;max-height:300px}}
