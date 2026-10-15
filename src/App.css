@@ -444,3 +444,6 @@
 
 .cashflow-view>.page-heading{background:rgba(11,20,36,.96)!important;box-shadow:0 6px 14px rgba(0,0,0,.18)}.cashflow-category-panel{height:340px;min-height:340px;max-height:340px;box-sizing:border-box}.cashflow-category-panel .cashflow-category-items{flex:1 1 auto;align-content:start;overflow:hidden}
 @media(max-width:600px){.cashflow-category-panel{height:300px;min-height:300px;max-height:300px}}
+
+.card-statement-actions{display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bs-border-color)}.card-statement-actions .btn{white-space:nowrap}
+@media(max-width:560px){.card-statement-actions{justify-content:stretch}.card-statement-actions .btn{width:100%}}
