@@ -1166,7 +1166,7 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
   const sankeyLinks = links.map((link) => ({ ...link, source: nodeIdByRaw.get(link.source) || link.source, target: nodeIdByRaw.get(link.target) || link.target }))
   const averageMonths = new Set(Array.from({ length: 12 }, (_, index) => { const date = parseMonth(month); date.setMonth(date.getMonth() - index); return formatIsoMonth(date) }))
   const averageTotals = new Map()
-  transactions.filter((transaction) => averageMonths.has(transaction.cashflow_month?.slice(0, 7))).forEach((transaction) => { const category = transactionType(transaction.type); const key = category.value; averageTotals.set(key, (averageTotals.get(key) || 0) + Math.abs(Number(transaction.amount || 0)) })
+  transactions.filter((transaction) => averageMonths.has(transaction.cashflow_month?.slice(0, 7))).forEach((transaction) => { const category = transactionType(transaction.type); const key = category.value; averageTotals.set(key, (averageTotals.get(key) || 0) + Math.abs(Number(transaction.amount || 0))) })
   ledger.filter((item) => averageMonths.has(item.cashflow_month?.slice(0, 7))).forEach((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); averageTotals.set(category.value, (averageTotals.get(category.value) || 0) + Math.abs(amount)) })
   const categoryMap = new Map()
   cashflowItems.forEach((item) => { const existing = categoryMap.get(item.categoryKey) || { ...item.category, items: [], total: 0 }; existing.items.push(item); existing.total += item.value; categoryMap.set(item.categoryKey, existing) })
