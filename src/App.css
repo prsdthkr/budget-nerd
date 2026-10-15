@@ -435,3 +435,6 @@
 
 .cashflow-month-picker{display:flex;align-items:center;gap:.35rem;min-width:0}.cashflow-month-picker .react-datepicker-wrapper{min-width:130px}.cashflow-month-picker .plan-month-arrow{flex:0 0 34px}
 @media(max-width:560px){.cashflow-month-picker{width:100%}.cashflow-month-picker .react-datepicker-wrapper{flex:1;min-width:0}}
+
+.ledger-form-two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.ledger-amount-triplet{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:.75rem;margin-top:1rem}.ledger-amount-triplet .ledger-swap-button{width:38px;height:38px;margin:0;padding:0}.ledger-entry-form .form-group{min-width:0}
+@media(max-width:600px){.ledger-form-two-col{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.ledger-amount-triplet{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:.4rem}.ledger-amount-triplet .input-group-text{padding:.35rem}.ledger-amount-triplet .form-control{min-width:0;padding:.35rem}}
