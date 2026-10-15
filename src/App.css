@@ -423,3 +423,5 @@
 .credit-card.has-card-art .card-art-image{filter:blur(1rem);transform:scale(1.08)}
 
 .cashflow-category-panel{height:100%;align-self:stretch}.cashflow-category-panel .cashflow-category-items{flex:1}.cashflow-category-panel .cashflow-see-all{margin-top:auto!important}
+
+.cashflow-category-heading>div{flex-wrap:wrap}.cashflow-category-average{color:var(--bs-secondary-color);font-size:.7rem;font-weight:600;white-space:nowrap}
