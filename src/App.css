@@ -421,3 +421,5 @@
 .card-art-gradient{position:absolute;inset:-2%;z-index:0;background:radial-gradient(circle at 15% 15%,var(--card-art-light,var(--card-color)),transparent 42%),radial-gradient(circle at 85% 80%,var(--card-art-vibrant,var(--card-end-color)),transparent 48%),linear-gradient(135deg,var(--card-art-dark,var(--card-color)),var(--card-art-muted,var(--card-end-color)));filter:blur(2px);transform:scale(1.025)}
 
 .credit-card.has-card-art .card-art-image{filter:blur(1rem);transform:scale(1.08)}
+
+.cashflow-category-panel{height:100%;align-self:stretch}.cashflow-category-panel .cashflow-category-items{flex:1}.cashflow-category-panel .cashflow-see-all{margin-top:auto!important}
