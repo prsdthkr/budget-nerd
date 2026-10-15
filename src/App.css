@@ -429,3 +429,6 @@
 .cashflow-category-average-button{padding:0;border:0;color:var(--bs-secondary-color);background:transparent;font-size:.7rem;font-weight:600;white-space:nowrap}.cashflow-category-average-button:hover,.cashflow-category-average-button:focus-visible{color:var(--bs-primary);text-decoration:underline}.cashflow-average-chart-wrap{width:100%;overflow-x:auto;margin-bottom:1rem}.cashflow-average-chart{display:block;width:100%;min-width:620px;height:auto}.cashflow-chart-label{fill:var(--bs-secondary-color);font-size:11px}
 
 .react-datepicker__current-month,.react-datepicker-time__header,.react-datepicker-year-header,.react-datepicker__year-read-view--selected-year,.react-datepicker__month-read-view--selected-month{color:var(--bs-body-color)!important}
+
+.plan-month-picker{display:flex;align-items:center;gap:.35rem;min-width:0}.plan-month-picker .react-datepicker-wrapper{min-width:130px}.plan-month-arrow{display:grid;place-items:center;width:34px;height:38px;padding:0;font-size:1.35rem;line-height:1}
+@media(max-width:560px){.plan-month-picker{width:100%}.plan-month-picker .react-datepicker-wrapper{flex:1;min-width:0}.plan-month-arrow{flex:0 0 34px}}
