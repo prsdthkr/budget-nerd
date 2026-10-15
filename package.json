@@ -17,7 +17,8 @@
     "react-bootstrap-typeahead": "^6.4.1",
     "react-datepicker": "^8.7.0",
     "react-router-dom": "^7.6.2",
-    "@nivo/sankey": "^0.99.0"
+    "@nivo/sankey": "^0.99.0",
+    "node-vibrant": "^4.0.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
