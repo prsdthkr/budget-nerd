@@ -425,3 +425,5 @@
 .cashflow-category-panel{height:100%;align-self:stretch}.cashflow-category-panel .cashflow-category-items{flex:1}.cashflow-category-panel .cashflow-see-all{margin-top:auto!important}
 
 .cashflow-category-heading>div{flex-wrap:wrap}.cashflow-category-average{color:var(--bs-secondary-color);font-size:.7rem;font-weight:600;white-space:nowrap}
+
+.cashflow-category-average-button{padding:0;border:0;color:var(--bs-secondary-color);background:transparent;font-size:.7rem;font-weight:600;white-space:nowrap}.cashflow-category-average-button:hover,.cashflow-category-average-button:focus-visible{color:var(--bs-primary);text-decoration:underline}.cashflow-average-chart-wrap{width:100%;overflow-x:auto;margin-bottom:1rem}.cashflow-average-chart{display:block;width:100%;min-width:620px;height:auto}.cashflow-chart-label{fill:var(--bs-secondary-color);font-size:11px}
