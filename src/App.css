@@ -453,3 +453,5 @@
 .card-unplanned-badge{align-self:flex-start;margin-bottom:.12rem;padding:.08rem .3rem;border-radius:4px;color:#fff;background:#dc3545;font-size:.58rem;font-weight:800;letter-spacing:.08em;line-height:1;text-transform:lowercase}.credit-card.has-card-art .card-unplanned-badge{text-shadow:0 1px 3px rgba(0,0,0,.7)}
 
 .ledger-row.realized:not(.below-minimum){background-color:#0f1728!important}.ledger-row.planned:not(.below-minimum){background-color:rgba(27,41,72,.55)!important}
+
+.statement-summary .card-unplanned-badge{display:inline-flex;align-self:auto;margin:0 0 0 .4rem;vertical-align:middle}
