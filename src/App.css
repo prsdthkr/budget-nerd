@@ -455,3 +455,5 @@
 .ledger-row.realized:not(.below-minimum){background-color:#0f1728!important}.ledger-row.planned:not(.below-minimum){background-color:rgba(27,41,72,.55)!important}
 
 .statement-summary .card-unplanned-badge{display:inline-flex;align-self:auto;margin:0 0 0 .4rem;vertical-align:middle}
+
+.cashflow-detail-row.clickable{cursor:pointer}.cashflow-detail-row.clickable:hover,.cashflow-detail-row.clickable:focus-visible{background:var(--bs-tertiary-bg);outline:none}.cashflow-detail-row.clickable:focus-visible{box-shadow:inset 0 0 0 2px var(--bs-primary)}
