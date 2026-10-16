@@ -449,3 +449,5 @@
 @media(max-width:560px){.card-statement-actions{justify-content:stretch}.card-statement-actions .btn{width:100%}}
 
 .statement-month-picker{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.35rem;min-width:0}.statement-month-picker .btn{display:grid;place-items:center;width:30px;height:32px;padding:0;font-size:1.15rem;line-height:1}.statement-month-picker .form-select{min-width:0}
+
+.card-unplanned-badge{align-self:flex-start;margin-bottom:.12rem;padding:.08rem .3rem;border-radius:4px;color:#fff;background:#dc3545;font-size:.58rem;font-weight:800;letter-spacing:.08em;line-height:1;text-transform:lowercase}.credit-card.has-card-art .card-unplanned-badge{text-shadow:0 1px 3px rgba(0,0,0,.7)}
