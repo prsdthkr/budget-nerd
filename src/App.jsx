@@ -1182,9 +1182,9 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
   const linksByKey = new Map()
   const addLink = (source, target, value) => { if (!value) return; const key = source + '::' + target; linksByKey.set(key, (linksByKey.get(key) || 0) + Math.abs(Number(value))) }
   const cashflowItems = [
-    ...transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).map((transaction) => { const category = transactionType(transaction.type); const amount = Number(transaction.amount || 0); return { categoryKey: category.value, category, name: transaction.name, notes: transaction.notes || '', date: transaction.transaction_date, value: Math.abs(amount), kind: 'Transaction', direction: amount >= 0 ? 'Out' : 'In' } }),
+    ...transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).map((transaction) => { const category = transactionType(transaction.type); const amount = Number(transaction.amount || 0); return { categoryKey: category.value, category, name: transaction.name, notes: transaction.notes || '', date: transaction.transaction_date, value: amount, kind: 'Transaction', direction: amount >= 0 ? 'Out' : 'In' } }),
     ...ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).map((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); return { categoryKey: category.value, category, name: item.description || 'Ledger item', notes: item.notes || '', date: item.ledger_date, value: Math.abs(amount), kind: 'Ledger item', direction: amount >= 0 ? 'In' : 'Out' } }),
-  ].filter((item) => item.value > 0)
+  ] .filter((item) => item.value !== 0)
   transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).forEach((transaction) => { const category = transactionType(transaction.type).emoji + ' ' + transactionType(transaction.type).label; const amount = Number(transaction.amount || 0); if (amount >= 0) addLink('Cashflow', 'Out: ' + category, amount); else addLink('In: ' + category, 'Cashflow', amount) })
   ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).forEach((item) => { const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); const category = transactionType(item.category || 'misc'); const label = category.emoji + ' ' + category.label; if (amount >= 0) addLink('In: ' + label, 'Cashflow', amount); else addLink('Cashflow', 'Out: ' + label, amount) })
   const links = [...linksByKey.entries()].map(([key, value]) => { const [source, target] = key.split('::'); return { source, target, value } })
@@ -1199,9 +1199,9 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
   const averageTotals = new Map()
   const averageActiveMonths = new Map()
   const averageMonthlyTotals = new Map()
-  const recordAverage = (key, monthKey, amount) => { if (!amount) return; averageTotals.set(key, (averageTotals.get(key) || 0) + Math.abs(amount)); const activeMonths = averageActiveMonths.get(key) || new Set(); activeMonths.add(monthKey); averageActiveMonths.set(key, activeMonths); const monthly = averageMonthlyTotals.get(key) || new Map(); monthly.set(monthKey, (monthly.get(monthKey) || 0) + Math.abs(amount)); averageMonthlyTotals.set(key, monthly) }
+  const recordAverage = (key, monthKey, amount) => { if (!amount) return; averageTotals.set(key, (averageTotals.get(key) || 0) + amount); const activeMonths = averageActiveMonths.get(key) || new Set(); activeMonths.add(monthKey); averageActiveMonths.set(key, activeMonths); const monthly = averageMonthlyTotals.get(key) || new Map(); monthly.set(monthKey, (monthly.get(monthKey) || 0) + Math.abs(amount)); averageMonthlyTotals.set(key, monthly) }
   transactions.filter((transaction) => averageMonths.has(transaction.cashflow_month?.slice(0, 7))).forEach((transaction) => { const category = transactionType(transaction.type); const monthKey = transaction.cashflow_month?.slice(0, 7); recordAverage(category.value, monthKey, Number(transaction.amount || 0)) })
-  ledger.filter((item) => averageMonths.has(item.cashflow_month?.slice(0, 7))).forEach((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); recordAverage(category.value, item.cashflow_month?.slice(0, 7), amount) })
+  ledger.filter((item) => averageMonths.has(item.cashflow_month?.slice(0, 7))).forEach((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); recordAverage(category.value, item.cashflow_month?.slice(0, 7), Math.abs(amount)) })
   const categoryMap = new Map(TRANSACTION_TYPES.map((category) => [category.value, { ...category, items: [], total: 0 }]))
   cashflowItems.forEach((item) => { const existing = categoryMap.get(item.categoryKey) || { ...item.category, items: [], total: 0 }; existing.items.push(item); existing.total += item.value; categoryMap.set(item.categoryKey, existing) })
   const categoryOrder = new Map(TRANSACTION_TYPES.map((category, index) => [category.value, index]))
@@ -1213,7 +1213,7 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts }) {
 }
 
 function CashflowCategoryPanel({ category, onSeeAll, onShowAverage }) {
-  const topItems = [...category.items].sort((left, right) => right.value - left.value).slice(0, 5)
+  const topItems = [...category.items].sort((left, right) => Math.abs(right.value) - Math.abs(left.value)).slice(0, 5)
   return <section className="content-card cashflow-category-panel"><div className="cashflow-category-heading"><div><span className="cashflow-category-emoji">{category.emoji}</span><strong>{category.label}</strong><button type="button" className="cashflow-category-average-button" onClick={onShowAverage} aria-label={'Show 12 month average for ' + category.label}>Avg {formatPlainAmount(category.average)}/mo</button></div><strong>{formatPlainAmount(category.total)}</strong></div><div className="cashflow-category-items">{topItems.length === 0 ? <p className="muted">No activity this month.</p> : topItems.map((item, index) => <div className="cashflow-category-item" key={item.kind + '-' + item.date + '-' + item.name + '-' + index}><div><strong>{item.name}</strong><small>{item.kind} · {formatDate(item.date)}{item.notes ? ' · ' + item.notes : ''}</small></div><span>{formatPlainAmount(item.value)}</span></div>)}</div><Button type="button" variant="outline-secondary" size="sm" className="cashflow-see-all" onClick={onSeeAll} disabled={!category.items.length}>See all ({category.items.length})</Button></section>
 }
 
@@ -1223,8 +1223,10 @@ function CashflowCategoryAverageModal({ category, close }) {
   const height = 300
   const padding = { top: 24, right: 24, bottom: 54, left: 64 }
   const max = Math.max(1, ...points.map((point) => point.total))
+  const min = Math.min(0, ...points.map((point) => point.total))
+  const range = Math.max(1, max - min)
   const x = (index) => padding.left + (index / Math.max(1, points.length - 1)) * (width - padding.left - padding.right)
-  const y = (value) => padding.top + (1 - value / max) * (height - padding.top - padding.bottom)
+  const y = (value) => padding.top + ((max - value) / range) * (height - padding.top - padding.bottom)
   const linePoints = points.map((point, index) => x(index) + ',' + y(point.total)).join(' ')
   return <Modal show onHide={close} centered size="lg"><Modal.Header closeButton><Modal.Title><span className="cashflow-category-emoji">{category.emoji}</span> {category.label} · 12 month average {formatPlainAmount(category.average)}/mo</Modal.Title></Modal.Header><Modal.Body><div className="cashflow-average-chart-wrap"><svg className="cashflow-average-chart" viewBox={'0 0 ' + width + ' ' + height} role="img" aria-label={'Monthly ' + category.label + ' totals for the last 12 months'}><polyline points={linePoints} fill="none" stroke="var(--bs-primary)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />{points.map((point, index) => <g key={point.month}><circle cx={x(index)} cy={y(point.total)} r="5" fill="var(--bs-primary)" /><title>{formatMonth(point.month + '-01') + ': ' + formatPlainAmount(point.total)}</title><text x={x(index)} y={height - 22} textAnchor="middle" className="cashflow-chart-label">{formatMonth(point.month + '-01').split(' ')[0]}</text></g>)}</svg></div><Table responsive hover size="sm"><thead><tr><th>Month</th><th className="text-end">Total</th></tr></thead><tbody>{points.map((point) => <tr key={point.month}><td>{formatMonth(point.month + '-01')}</td><td className="text-end">{formatPlainAmount(point.total)}</td></tr>)}</tbody></Table></Modal.Body></Modal>
 }
