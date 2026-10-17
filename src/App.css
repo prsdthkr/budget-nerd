@@ -469,3 +469,5 @@
 .ledger-table-row-editable{cursor:default}.ledger-table-row-editable td:not(.ledger-table-actions){cursor:pointer}
 
 .transaction-table-wrap{width:100%;overflow-x:auto}.transaction-table{min-width:1180px;margin:0}.transaction-table th{white-space:nowrap;color:var(--bs-secondary-color);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}.transaction-table td{vertical-align:middle;white-space:nowrap}.transaction-table td:nth-child(3),.transaction-table td:nth-child(4){white-space:normal;min-width:150px;max-width:260px}.transaction-table-actions{display:flex;align-items:center;gap:.35rem}.transaction-table-actions .btn{white-space:nowrap}
+
+.cashflow-average-point,.cashflow-average-month-row{cursor:pointer}.cashflow-average-month-row:hover,.cashflow-average-month-row:focus-visible{background:var(--bs-tertiary-bg)}
