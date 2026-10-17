@@ -459,3 +459,5 @@
 .cashflow-detail-row.clickable{cursor:pointer}.cashflow-detail-row.clickable:hover,.cashflow-detail-row.clickable:focus-visible{background:var(--bs-tertiary-bg);outline:none}.cashflow-detail-row.clickable:focus-visible{box-shadow:inset 0 0 0 2px var(--bs-primary)}
 
 @media(max-width:760px){.ledger-row{grid-template-columns:minmax(0,1fr)!important;align-items:start;gap:.55rem}.ledger-row .ledger-row-main,.ledger-row .ledger-amounts,.ledger-row .transaction-row-actions{grid-column:1!important;grid-row:auto!important}.ledger-row .ledger-row-main{grid-template-columns:1fr;align-items:start}.ledger-row .ledger-row-main .ledger-category-inline,.ledger-row .ledger-row-main .ledger-cashflow-inline{grid-column:auto;grid-row:auto;width:100%;max-width:none}.ledger-row .ledger-amounts{display:flex;align-items:center;justify-content:flex-start;gap:.5rem;text-align:left;white-space:normal}.ledger-row .transaction-row-actions{width:100%;margin:0;justify-content:flex-start}}
+
+.ledger-row{align-items:start}.ledger-row-main{align-items:start}.ledger-row .ledger-amounts,.ledger-row .transaction-row-actions{align-self:start}
