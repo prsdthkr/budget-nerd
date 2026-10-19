@@ -1274,7 +1274,7 @@ function statementSummary(card, transactions, ledger = []) {
   const nextTotal = totalForMonth(nextMonth)
   const dueDate = card.due_day ? dueDateForStatement(currentDate, card.due_day) : null
   const dueInDays = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / 86400000) : null
-  const overdue = Boolean(dueDate && dueDate < now)
+  const overdue = Boolean(card.due_day && Number(card.due_day) < now.getDate())
   const plannedPayment = paymentFor(anchorMonth)
   const hasPlannedPayment = Boolean(plannedPayment && Number(plannedPayment.planned_amount || 0) !== 0)
   const unplanned = currentTotal !== 0 && !paymentPaid && !hasPlannedPayment
