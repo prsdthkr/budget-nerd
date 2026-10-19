@@ -1128,13 +1128,16 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts, openEdi
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [selectedAverageCategory, setSelectedAverageCategory] = useState(null)
   const linksByKey = new Map()
+  const sankeyCategoryTotals = new Map()
   const addLink = (source, target, value) => { if (!value) return; const key = source + '::' + target; linksByKey.set(key, (linksByKey.get(key) || 0) + Math.abs(Number(value))) }
+  const addSankeyCategoryTotal = (category, value) => { if (!value) return; sankeyCategoryTotals.set(category.value, (sankeyCategoryTotals.get(category.value) || 0) + Number(value)) }
   const cashflowItems = [
     ...transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).map((transaction) => { const category = transactionType(transaction.type); const amount = Number(transaction.amount || 0); return { categoryKey: category.value, category, source: transaction, name: transaction.name, notes: transaction.notes || '', date: transaction.transaction_date, value: amount, kind: 'Transaction', direction: amount >= 0 ? 'Out' : 'In' } }),
     ...ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).map((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); return { categoryKey: category.value, category, name: item.description || 'Ledger item', notes: item.notes || '', date: item.ledger_date, value: Math.abs(amount), kind: 'Ledger item', direction: amount >= 0 ? 'In' : 'Out' } }),
   ] .filter((item) => item.value !== 0)
-  transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).forEach((transaction) => { const category = transactionType(transaction.type).emoji + ' ' + transactionType(transaction.type).label; const amount = Number(transaction.amount || 0); if (amount >= 0) addLink('Cashflow', 'Out: ' + category, amount); else addLink('In: ' + category, 'Cashflow', amount) })
-  ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).forEach((item) => { const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); const category = transactionType(item.category || 'misc'); const label = category.emoji + ' ' + category.label; if (amount >= 0) addLink('In: ' + label, 'Cashflow', amount); else addLink('Cashflow', 'Out: ' + label, amount) })
+  transactions.filter((transaction) => transaction.cashflow_month?.slice(0, 7) === month).forEach((transaction) => { const category = transactionType(transaction.type); addSankeyCategoryTotal(category, Number(transaction.amount || 0)) })
+  ledger.filter((item) => item.cashflow_month?.slice(0, 7) === month).forEach((item) => { const category = transactionType(item.category || 'misc'); const amount = Number(item.realized_amount || 0) + Number(item.planned_amount || 0); addSankeyCategoryTotal(category, -amount) })
+  sankeyCategoryTotals.forEach((total, categoryValue) => { const category = transactionType(categoryValue); const label = category.emoji + ' ' + category.label; if (total >= 0) addLink('Cashflow', 'Out: ' + label, total); else addLink('In: ' + label, 'Cashflow', total) })
   const links = [...linksByKey.entries()].map(([key, value]) => { const [source, target] = key.split('::'); return { source, target, value } })
   const incomingTotal = links.filter((link) => link.target === 'Cashflow').reduce((sum, link) => sum + link.value, 0)
   const outgoingTotal = links.filter((link) => link.source === 'Cashflow').reduce((sum, link) => sum + link.value, 0)
