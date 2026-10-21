@@ -480,3 +480,5 @@
 @media(max-width:600px){.account-workspace-compact-row{grid-template-columns:1fr}.account-workspace-compact-row .account-modal-summary{grid-column:1}.account-workspace-actions{grid-column:1;grid-row:auto;justify-content:stretch}.account-workspace-actions .btn{flex:1}}
 
 .account-workspace-compact-row .account-modal-summary{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+
+.account-workspace-compact-row .account-modal-summary>div{text-align:center;justify-items:center}
