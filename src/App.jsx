@@ -32,6 +32,8 @@ const ACCOUNT_CURRENCIES = [
 
 const defaultTransaction = (type = 'misc', statementMonth = new Date().toISOString().slice(0, 7), cashflowMonth = new Date().toISOString().slice(0, 7)) => ({ type, name: '', notes: '', recurring: false, date: new Date().toISOString().slice(0, 10), amount: '', statementMonth, cashflowMonth, cashbackCategoryId: '' })
 
+const preferredStatementMonthForCard = (card) => card?.default_statement_month ? card.default_statement_month.slice(0, 7) : formatIsoMonth(statementPeriods(card?.statement_day, new Date()).currentDate)
+
 const CARD_COLORS = [
   { name: 'Ocean', value: '#2563eb' }, { name: 'Sky', value: '#0284c7' }, { name: 'Cyan Blue', value: '#0891b2' }, { name: 'Aqua', value: '#48cae4' }, { name: 'Pacific Blue', value: '#0077b6' }, { name: 'Teal', value: '#0f766e' },
   { name: 'Emerald', value: '#059669' }, { name: 'Lime', value: '#65a30d' }, { name: 'Amber', value: '#d97706' }, { name: 'Gold', value: '#b8860b' },
@@ -625,8 +627,7 @@ export default function App() {
     setSelectedCardNoForex(Boolean(card.no_forex))
     setSelectedCardImageUrl(card.image_url || '')
     setSelectedCardName(card.name || '')
-    const periods = statementPeriods(card.statement_day, new Date())
-    const defaultStatementMonth = card.default_statement_month ? card.default_statement_month.slice(0, 7) : formatIsoMonth(periods.currentDate)
+    const defaultStatementMonth = preferredStatementMonthForCard(card)
     setSelectedCardDefaultStatementMonth(defaultStatementMonth)
     setStatementMonthFilter(defaultStatementMonth)
     setTransactionForm(defaultTransaction(card.default_category || 'misc', defaultStatementMonth))
@@ -634,8 +635,7 @@ export default function App() {
   }
 
   const openQuickAdd = (card) => {
-    const periods = statementPeriods(card.statement_day, new Date())
-    const defaultStatementMonth = card.default_statement_month ? card.default_statement_month.slice(0, 7) : formatIsoMonth(periods.currentDate)
+    const defaultStatementMonth = preferredStatementMonthForCard(card)
     setQuickAddCard(card)
     setQuickAddForm({ ...defaultTransaction(card.default_category || 'misc', defaultStatementMonth, defaultStatementMonth), date: formatIsoDate(new Date()) })
     setNotice(null)
@@ -648,7 +648,7 @@ export default function App() {
     if (!quickAddCard) return
     const name = String(quickAddForm.name || '').trim()
     const date = quickAddForm.date || formatIsoDate(new Date())
-    const statementMonth = quickAddForm.statementMonth || formatIsoMonth(new Date())
+    const statementMonth = quickAddForm.statementMonth || preferredStatementMonthForCard(quickAddCard)
     const amount = Number(String(quickAddForm.amount ?? '').replace(/[$,]/g, '').trim())
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     const cardTransactions = allTransactions.filter((transaction) => transaction.card_id === quickAddCard.id)
@@ -742,7 +742,7 @@ export default function App() {
     if (!selectedCard) return
     const name = String(transactionForm.name || '').trim()
     const date = transactionForm.date || formatIsoDate(new Date())
-    const statementMonth = transactionForm.statementMonth || formatIsoMonth(new Date())
+    const statementMonth = transactionForm.statementMonth || preferredStatementMonthForCard(selectedCard)
     const amount = Number(String(transactionForm.amount ?? '').replace(/[$,]/g, '').trim())
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) {
       return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
@@ -769,7 +769,7 @@ export default function App() {
     setTransactions((current) => [response.data, ...current])
     setAllTransactions((current) => [response.data, ...current])
     await loadBankData()
-    setTransactionForm(defaultTransaction(selectedCard.default_category || 'misc', selectedCard.default_statement_month ? selectedCard.default_statement_month.slice(0, 7) : formatIsoMonth(statementPeriods(selectedCard.statement_day, new Date()).currentDate)))
+    setTransactionForm(defaultTransaction(selectedCard.default_category || 'misc', preferredStatementMonthForCard(selectedCard)))
     setNotice({ type: 'success', text: 'Transaction added to ' + selectedCard.name + '.' })
   }
 
@@ -786,7 +786,7 @@ export default function App() {
     if (!editingTransaction) return
     const name = String(editTransactionForm.name || '').trim()
     const date = editTransactionForm.date || formatIsoDate(new Date())
-    const statementMonth = editTransactionForm.statementMonth || formatIsoMonth(new Date())
+    const statementMonth = editTransactionForm.statementMonth || preferredStatementMonthForCard(cards.find((card) => card.id === editingTransaction.card_id))
     const amount = Number(String(editTransactionForm.amount ?? '').replace(/[$,]/g, '').trim())
     if (!name || !date || !statementMonth || !Number.isFinite(amount)) return setNotice({ type: 'error', text: 'Enter a name, date, statement month, and a valid dollar value.' })
     const cashbackAmount = cashbackAmountForTransaction(editTransactionForm.amount, date, editTransactionForm.cashbackCategoryId, cardCashbackAssignments, cashbackCategories, allTransactions, editingTransaction.id, editingTransaction.card_id)
