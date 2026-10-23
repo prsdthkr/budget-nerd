@@ -11,6 +11,7 @@ async function hashKey(value: string) {
 }
 
 function monthForDate(value: string) { return value.slice(0, 7) + '-01' }
+function currentMonth() { return new Date().toISOString().slice(0, 7) + '-01' }
 function validDate(value: unknown) { return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) }
 
 Deno.serve(async (request) => {
@@ -51,7 +52,7 @@ Deno.serve(async (request) => {
     if (!cardId) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'missing_card' }); return json({ error: 'Each transaction needs card_id or card_name.' }, 400) }
     const { data: card } = await client.from('credit_cards').select('id, default_statement_month').eq('id', cardId).eq('user_id', keyRecord.user_id).maybeSingle()
     if (!card) { log('validation_failed', { user_id: keyRecord.user_id, index, reason: 'card_not_owned' }); return json({ error: 'Card not found for this API key owner.' }, 400) }
-    const statementMonth = entry?.statement_month || entry?.preferred_statement_month || card.default_statement_month?.slice(0, 10) || monthForDate(transactionDate)
+    const statementMonth = entry?.statement_month || entry?.preferred_statement_month || card.default_statement_month?.slice(0, 10) || currentMonth()
     if (!/^\d{4}-\d{2}-01$/.test(statementMonth)) return json({ error: 'statement_month must be YYYY-MM-01.' }, 400)
     const requestedCashbackCategoryId = entry?.cashback_category_id || null
     let cashbackCategoryId = null
