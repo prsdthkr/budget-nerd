@@ -904,8 +904,8 @@ function ToDoView({ ledger, accounts, transactions = [], cards = [], month, setM
   const cardNames = new Map(cards.map((card) => [card.id, card.name]))
   const today = formatIsoDate(new Date())
   const plannedItems = ledger.filter((item) => item && item.planned_amount !== null && Number(item.planned_amount || 0) !== 0 && item.ledger_date?.slice(0, 7) === month).sort((left, right) => left.ledger_date.localeCompare(right.ledger_date) || String(left.created_at).localeCompare(String(right.created_at)))
-  const futureTransactions = transactions.filter((transaction) => transaction?.transaction_date > today && transaction.transaction_date?.slice(0, 7) === month).map((transaction) => ({ ...transaction, todoKind: 'transaction' }))
-  const todoItems = [...plannedItems.map((item) => ({ ...item, todoKind: 'ledger' })), ...futureTransactions].sort((left, right) => left.transaction_date?.localeCompare(right.transaction_date || '') || left.ledger_date?.localeCompare(right.ledger_date || '') || String(left.created_at).localeCompare(String(right.created_at)))
+  const futureTransactions = transactions.filter((transaction) => transaction?.transaction_date > today && transaction.transaction_date?.slice(0, 7) === month).map((transaction) => ({ ...transaction, todoKind: 'transaction', todoDate: transaction.transaction_date }))
+  const todoItems = [...plannedItems.map((item) => ({ ...item, todoKind: 'ledger', todoDate: item.ledger_date })), ...futureTransactions].sort((left, right) => left.todoDate.localeCompare(right.todoDate) || String(left.created_at).localeCompare(String(right.created_at)))
   const realize = async (item) => {
     setRealizingId(item.id)
     try { await realizeLedgerItem(item) } finally { setRealizingId(null) }
