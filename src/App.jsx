@@ -1172,9 +1172,8 @@ function CashflowView({ month, setMonth, transactions, ledger, accounts, openEdi
   const shiftCashflowMonth = (offset) => { const date = parseMonth(month); date.setMonth(date.getMonth() + offset); setMonth(formatIsoMonth(date)) }
   const monthName = parseMonth(month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   const openSankeyCategory = (datum) => {
-    const rawId = datum?.id || datum?.source?.id || datum?.target?.id || datum?.source || datum?.target
-    const label = String(rawId || '').replace(/^(In|Out): /, '').replace(/[\u200b\u200c]/g, '')
-    const category = TRANSACTION_TYPES.find((item) => item.emoji + ' ' + item.label === label)
+    const ids = [datum?.id, datum?.source?.id, datum?.target?.id, datum?.source, datum?.target].filter(Boolean)
+    const category = ids.map((id) => String(id).replace(/^(In|Out): /, '').replace(/[\u200b\u200c]/g, '')).map((label) => TRANSACTION_TYPES.find((item) => item.emoji + ' ' + item.label === label)).find(Boolean)
     if (category) setSelectedCategory(categoryMap.get(category.value))
   }
   const sankeyData = { nodes, links: sankeyLinks }
