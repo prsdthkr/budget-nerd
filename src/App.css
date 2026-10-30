@@ -482,3 +482,5 @@
 .account-workspace-compact-row .account-modal-summary{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
 
 .account-workspace-compact-row .account-modal-summary>div{text-align:center;justify-items:center}
+
+@media(max-width:560px){.plan-month-picker>.btn:not(.plan-month-arrow){width:auto;flex:0 0 auto;white-space:nowrap}.plan-month-picker>.plan-month-arrow{width:34px;flex:0 0 34px}.plan-month-picker .react-datepicker-wrapper{width:auto;flex:1 1 auto;min-width:0}}
