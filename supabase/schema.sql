@@ -64,6 +64,7 @@ create table if not exists public.account_ledger_items (
   cashflow_month date,
   realized_amount numeric(12, 2) not null default 0,
   planned_amount numeric(12, 2) not null default 0,
+  cashflow_amount numeric(12, 2),
   recurring boolean not null default false,
   source_type text not null default 'manual' check (source_type in ('manual', 'card_payment')),
   card_id uuid references public.credit_cards(id) on delete cascade,
