@@ -442,7 +442,7 @@ export default function App() {
     const currentItems = bankLedger.filter((item) => item && item.account_id === selectedAccountId && item.ledger_date && item.ledger_date.slice(0, 7) === planMonth && item.recurring)
     if (!currentItems.length) return setNotice({ type: 'error', text: 'There are no recurring items in this month to copy.' })
     const nextItems = currentItems.map((item) => ({ account_id: selectedAccountId, description: item.description, category: item.category || 'misc', notes: item.notes || '', ledger_date: nextMonthDate(item.ledger_date), cashflow_month: item.cashflow_month ? nextMonthDate(item.cashflow_month) : null, cashflow_amount: item.cashflow_amount, realized_amount: 0, planned_amount: Number(item.planned_amount) || Number(item.realized_amount) || 0, recurring: true, recurrence_id: item.recurrence_id }))
-    const response = await supabase.from('account_ledger_items').upsert(nextItems, { onConflict: 'account_id,recurrence_id,ledger_date', ignoreDuplicates: true }).select('id, account_id, description, ledger_date, realized_amount, planned_amount, recurring, recurrence_id, created_at')
+    const response = await supabase.from('account_ledger_items').upsert(nextItems, { onConflict: 'account_id,recurrence_id,ledger_date', ignoreDuplicates: true }).select('id, account_id, description, category, notes, ledger_date, cashflow_month, cashflow_amount, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at')
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
     setBankLedger((current) => [...current, ...(response.data || [])])
     setNotice({ type: 'success', text: 'Recurring items copied to the next month.' })
