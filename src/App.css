@@ -506,4 +506,4 @@
 
 .transactions-page .activity-filter-actions>.btn{align-self:end}
 
-.credit-card .statement-summary strong:first-child{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
+.credit-card .statement-summary strong:nth-of-type(3){text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
