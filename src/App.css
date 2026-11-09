@@ -505,3 +505,5 @@
 @media(max-width:560px){.transactions-page .activity-filters{grid-template-columns:1fr}.transactions-page .activity-filter-primary>:nth-child(3){grid-column:1;grid-row:1}.transactions-page .activity-filter-actions>.btn:first-child{grid-column:1;grid-row:2}.transactions-page .activity-filter-actions>.btn:last-child{grid-column:1;grid-row:3}.transactions-page .activity-filter-primary>:nth-child(1){grid-column:1;grid-row:4}.transactions-page .activity-filter-primary>:nth-child(2){grid-column:1;grid-row:5}.transactions-page .activity-filter-secondary{grid-column:1;grid-row:6}}
 
 .transactions-page .activity-filter-actions>.btn{align-self:end}
+
+.credit-card .statement-summary strong:first-child{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
