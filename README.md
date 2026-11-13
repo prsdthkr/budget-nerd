@@ -105,7 +105,7 @@ Cashflow is a month-selectable Sankey view. Transactions default to the current 
 
 ## Transaction ingestion API
 
-The Settings page creates write-only API keys for transaction imports. Keys are hashed by the api-keys Supabase Edge Function and shown only once. The transactions-api function accepts one transaction or up to 1,000 transactions in a JSON array.
+The Settings page creates API keys for transaction imports and merchant mapping queries. Keys are hashed by the api-keys Supabase Edge Function and shown only once. The transactions-api function accepts one transaction or up to 1,000 transactions in a JSON array and exposes the authenticated user's merchant category mappings.
 
 Deploy the functions with the Supabase CLI:
 
@@ -124,4 +124,9 @@ Example request:
       -H "Content-Type: application/json" \\
       -d '{"card_name":"Everyday Rewards","type":"grocery","name":"Market","date":"2026-10-06","amount":42.50}'
 
-For bulk import, send {"transactions":[...]} with up to 1,000 entries. The API is intentionally write-only: it cannot read, update, or delete transactions.
+For bulk import, send {"transactions":[...]} with up to 1,000 entries. Merchant mappings can be queried with an optional exact, case-insensitive merchant key:
+
+    curl "https://PROJECT_REF.supabase.co/functions/v1/transactions-api?merchant=amazon" \
+      -H "Authorization: Bearer bn_live_your_key"
+
+The response contains `mappings: [{"merchant_key":"amazon","category":"shopping"}]`. Omitting `merchant` returns all mappings for the API key owner. The API does not read, update, or delete transactions.

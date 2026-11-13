@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-api-key' }
+const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-api-key', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 const admin = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!)
 const log = (event: string, details: Record<string, unknown> = {}) => console.log(JSON.stringify({ service: 'transactions-api', event, at: new Date().toISOString(), ...details }))
@@ -17,12 +17,22 @@ function validDate(value: unknown) { return typeof value === 'string' && /^\d{4}
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   log('request', { method: request.method })
-  if (request.method !== 'POST') { log('request_rejected', { reason: 'method_not_allowed' }); return json({ error: 'POST required.' }, 405) }
+  if (!['GET', 'POST'].includes(request.method)) { log('request_rejected', { reason: 'method_not_allowed' }); return json({ error: 'GET or POST required.' }, 405) }
   const rawKey = request.headers.get('X-API-Key') || (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
   if (!rawKey.startsWith('bn_live_')) { log('request_rejected', { reason: 'invalid_key_format' }); return json({ error: 'A valid API key is required.' }, 401) }
   const client = admin()
   const { data: keyRecord } = await client.from('user_api_keys').select('id, user_id').eq('key_hash', await hashKey(rawKey)).is('revoked_at', null).maybeSingle()
   if (!keyRecord) { log('request_rejected', { reason: 'invalid_or_revoked_key', key_prefix: rawKey.slice(0, 16) }); return json({ error: 'Invalid or revoked API key.' }, 401) }
+
+  if (request.method === 'GET') {
+    const merchant = new URL(request.url).searchParams.get('merchant')?.trim().toLowerCase() || ''
+    let query = client.from('merchant_category_mappings').select('merchant_key, category').eq('user_id', keyRecord.user_id).order('merchant_key', { ascending: true })
+    if (merchant) query = query.eq('merchant_key', merchant)
+    const { data, error } = await query
+    if (error) { log('mapping_query_failed', { user_id: keyRecord.user_id, error: error.message }); return json({ error: error.message }, 500) }
+    await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
+    return json({ merchant: merchant || null, mappings: data || [] })
+  }
 
   const body = await request.json().catch(() => null)
   const entries = Array.isArray(body) ? body : Array.isArray(body?.transactions) ? body.transactions : [body]
