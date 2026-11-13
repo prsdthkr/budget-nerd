@@ -25,13 +25,10 @@ Deno.serve(async (request) => {
   if (!keyRecord) { log('request_rejected', { reason: 'invalid_or_revoked_key', key_prefix: rawKey.slice(0, 16) }); return json({ error: 'Invalid or revoked API key.' }, 401) }
 
   if (request.method === 'GET') {
-    const merchant = new URL(request.url).searchParams.get('merchant')?.trim().toLowerCase() || ''
-    let query = client.from('merchant_category_mappings').select('merchant_key, category').eq('user_id', keyRecord.user_id).order('merchant_key', { ascending: true })
-    if (merchant) query = query.eq('merchant_key', merchant)
-    const { data, error } = await query
+    const { data, error } = await client.from('merchant_category_mappings').select('merchant_key, category').eq('user_id', keyRecord.user_id).order('merchant_key', { ascending: true })
     if (error) { log('mapping_query_failed', { user_id: keyRecord.user_id, error: error.message }); return json({ error: error.message }, 500) }
     await client.from('user_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
-    return json({ merchant: merchant || null, mappings: data || [] })
+    return json(Object.fromEntries((data || []).map((mapping) => [mapping.merchant_key, mapping.category])))
   }
 
   const body = await request.json().catch(() => null)
