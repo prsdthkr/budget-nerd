@@ -516,3 +516,5 @@
 
 .settings-view-shell{gap:1rem}.merchant-mapping-list{display:grid;gap:.55rem;margin-top:1rem}.merchant-mapping-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(150px,1fr) auto auto;align-items:center;gap:.55rem}.merchant-mapping-add-form{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(150px,1fr) auto;gap:.55rem;margin-top:1rem}.merchant-mapping-row .form-control,.merchant-mapping-row .form-select,.merchant-mapping-add-form .form-control,.merchant-mapping-add-form .form-select{min-width:0}.merchant-mapping-row .btn,.merchant-mapping-add-form .btn{white-space:nowrap}
 @media(max-width:700px){.merchant-mapping-row,.merchant-mapping-add-form{grid-template-columns:1fr}.merchant-mapping-row .btn,.merchant-mapping-add-form .btn{width:100%}}
+
+.ledger-table tr:has(td[title="Recurring"]) td[title="Not copied to next month"]{font-size:0}.ledger-table tr:has(td[title="Recurring"]) td[title="Not copied to next month"]::before{content:'⚠️';font-size:1rem}
