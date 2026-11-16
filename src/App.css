@@ -536,3 +536,6 @@
 
 .ledger-table tr.ledger-table-positive td{background:rgba(25,135,84,.18)!important}
 .ledger-table tr.ledger-table-below-minimum td{background:var(--bs-danger-bg-subtle)!important}
+
+.cashflow-average-modal-dialog .modal-header{display:flex;align-items:center;gap:.75rem}.cashflow-average-modal-dialog .modal-title{min-width:0;flex:1}.cashflow-average-modal-dialog .cashflow-modal-month-picker{display:flex;align-items:center;gap:.35rem;flex:0 0 auto}.cashflow-average-modal-dialog .cashflow-modal-month-picker .react-datepicker-wrapper{min-width:130px}.cashflow-average-modal-dialog .cashflow-modal-month-picker .plan-month-arrow{flex:0 0 34px}
+@media(max-width:560px){.cashflow-average-modal-dialog .cashflow-modal-month-picker{min-width:0}.cashflow-average-modal-dialog .cashflow-modal-month-picker .react-datepicker-wrapper{min-width:0;flex:1}.cashflow-average-modal-dialog .cashflow-modal-month-picker .plan-month-arrow{flex:0 0 30px;width:30px}}
