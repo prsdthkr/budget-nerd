@@ -533,3 +533,6 @@
 @media(max-width:760px){.ledger-table td:nth-child(8),.ledger-table td:nth-child(9),.ledger-table td:nth-child(10){display:flex!important;align-items:baseline;justify-content:flex-end;grid-column:1 / span 2;white-space:nowrap!important}}
 
 @media(max-width:760px){.ledger-table tr,.ledger-table td{border:0!important}.ledger-table td:nth-child(8),.ledger-table td:nth-child(9),.ledger-table td:nth-child(10){gap:0}.ledger-table td:nth-child(8),.ledger-table td:nth-child(9){justify-content:flex-start!important}.ledger-table td:nth-child(8)::before,.ledger-table td:nth-child(9)::before{display:block;color:var(--bs-secondary-color);font-size:.72rem;font-weight:700;white-space:nowrap}.ledger-table td:nth-child(8)::before{content:'Realize -';margin-right:auto}.ledger-table td:nth-child(9)::before{content:'Planned -';margin-right:auto}}
+
+.ledger-table tr.ledger-table-positive td{background:rgba(25,135,84,.18)!important}.ledger-table tr.ledger-table-positive td:first-child{box-shadow:inset 4px 0 0 var(--bs-success)}
+.ledger-table tr.ledger-table-below-minimum td{background:var(--bs-danger-bg-subtle)!important}
