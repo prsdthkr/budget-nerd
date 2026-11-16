@@ -545,3 +545,5 @@
 @media(max-width:760px){.plan-content-shell{height:calc(100vh - 4.75rem)}.plan-content-shell .plan-account-workspace{height:100%;min-height:0;grid-template-rows:auto minmax(0,1fr)}.plan-content-shell .plan-ledger-card{height:100%;min-height:0}}
 
 .plan-content-shell .plan-account-details{align-self:start;height:auto}
+
+@media(max-width:900px){.plan-content-shell .plan-account-workspace{height:100%;min-height:0;grid-template-rows:auto minmax(0,1fr)}}
