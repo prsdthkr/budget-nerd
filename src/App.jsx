@@ -55,6 +55,7 @@ const TRANSACTION_TYPES = [
   { value: 'cashback', label: 'Cashback', emoji: '💰' },
   { value: 'car', label: 'Car', emoji: '🚗' },
 ]
+const CC_PAYMENT_CATEGORY = { value: 'cc_payment', label: 'CC Payment', emoji: '💳' }
 
 
 const SPEND_TYPES = TRANSACTION_TYPES.filter((type) => ['grocery', 'shopping', 'food', 'misc'].includes(type.value))
@@ -830,7 +831,7 @@ export default function App() {
     setPaymentBusy(true)
     setNotice(null)
     const existing = bankLedger.find((item) => item.source_type === 'card_payment' && item.card_id === cardId && item.statement_month?.slice(0, 7) === statementMonth)
-    const values = { account_id: accountId, description: cardName + ' payment - ' + formatMonth(statementMonth + '-01'), ledger_date: statementPaymentDate(statementMonth, statementDay), realized_amount: 0, planned_amount: -Number(amount || 0), recurring: false, source_type: 'card_payment', card_id: cardId, statement_month: statementMonth + '-01' }
+    const values = { account_id: accountId, description: cardName + ' payment - ' + formatMonth(statementMonth + '-01'), category: CC_PAYMENT_CATEGORY.value, ledger_date: statementPaymentDate(statementMonth, statementDay), realized_amount: 0, planned_amount: -Number(amount || 0), recurring: false, source_type: 'card_payment', card_id: cardId, statement_month: statementMonth + '-01' }
     const response = existing ? await supabase.from('account_ledger_items').update(values).eq('id', existing.id).select('id, account_id, description, category, notes, ledger_date, cashflow_month, cashflow_amount, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single() : await supabase.from('account_ledger_items').insert(values).select('id, account_id, description, category, notes, ledger_date, cashflow_month, cashflow_amount, realized_amount, planned_amount, recurring, source_type, card_id, statement_month, recurrence_id, created_at').single()
     setPaymentBusy(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
@@ -1561,7 +1562,7 @@ function parseMonth(value) { return value ? new Date(value + '-01T00:00:00') : n
 function formatIsoDate(value) { return value ? value.getFullYear() + '-' + String(value.getMonth() + 1).padStart(2, '0') + '-' + String(value.getDate()).padStart(2, '0') : '' }
 function formatIsoMonth(value) { return value ? value.getFullYear() + '-' + String(value.getMonth() + 1).padStart(2, '0') : '' }
 
-function transactionType(value) { return TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
+function transactionType(value) { return value === CC_PAYMENT_CATEGORY.value ? CC_PAYMENT_CATEGORY : TRANSACTION_TYPES.find((type) => type.value === value) || TRANSACTION_TYPES[3] }
 function formatDate(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatMonth(value) { return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) }
 function formatCompactAmount(value) { const amount = Number(value || 0); const sign = amount < 0 ? '-$' : '$'; const absolute = Math.abs(amount); if (absolute >= 1000000) return sign + (absolute / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'; if (absolute >= 1000) return sign + (absolute / 1000).toFixed(1).replace(/\.0$/, '') + 'K'; return formatPlainAmount(amount) }
