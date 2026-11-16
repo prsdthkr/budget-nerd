@@ -524,3 +524,5 @@
 
 .ledger-table .ledger-table-actions-heading,.ledger-table .ledger-table-actions{width:260px}.ledger-actions-desktop{display:flex;align-items:center;gap:.35rem}.ledger-actions-menu{display:none}
 @media(max-width:760px){.ledger-table .ledger-table-actions{width:auto!important}.ledger-actions-desktop{display:none}.ledger-actions-menu{display:block}}
+
+.statement-recurring-indicator{display:inline-flex;align-items:center;margin-left:.35rem;color:var(--bs-primary);font-size:.85em;font-style:normal}.statement-recurring-indicator.warning{color:var(--bs-warning-text-emphasis)}
