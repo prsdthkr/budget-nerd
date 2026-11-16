@@ -539,3 +539,6 @@
 
 .cashflow-average-modal-dialog .modal-header{display:flex;align-items:center;gap:.75rem}.cashflow-average-modal-dialog .modal-title{min-width:0;flex:1}.cashflow-average-modal-dialog .cashflow-modal-month-picker{display:flex;align-items:center;gap:.35rem;flex:0 0 auto}.cashflow-average-modal-dialog .cashflow-modal-month-picker .react-datepicker-wrapper{min-width:130px}.cashflow-average-modal-dialog .cashflow-modal-month-picker .plan-month-arrow{flex:0 0 34px}
 @media(max-width:560px){.cashflow-average-modal-dialog .cashflow-modal-month-picker{min-width:0}.cashflow-average-modal-dialog .cashflow-modal-month-picker .react-datepicker-wrapper{min-width:0;flex:1}.cashflow-average-modal-dialog .cashflow-modal-month-picker .plan-month-arrow{flex:0 0 30px;width:30px}}
+
+.ledger-table tr.ledger-table-current-temporal td{border-bottom:3px solid var(--bs-primary)!important}
+@media(max-width:760px){.ledger-table tr.ledger-table-current-temporal{box-shadow:inset 0 -3px 0 var(--bs-primary)}.ledger-table tr.ledger-table-current-temporal td{border-bottom:0!important}}
