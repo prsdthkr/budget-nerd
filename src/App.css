@@ -553,3 +553,6 @@
 @media(max-width:900px){.plan-content-shell .plan-account-workspace{display:flex!important;height:auto!important;min-height:0!important;flex:1 1 auto!important;flex-direction:column}.plan-content-shell .plan-account-details{height:auto!important;min-height:0;flex:0 0 auto}.plan-content-shell .plan-ledger-card{height:auto!important;min-height:0;flex:1 1 0}}
 
 .plan-account-workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:max-content minmax(0,1fr)}
+
+.ledger-table tr.ledger-table-current-temporal td{border-bottom:3px solid var(--bs-primary)!important}
+@media(max-width:760px){.ledger-table tr.ledger-table-current-temporal{box-shadow:inset 0 -3px 0 var(--bs-primary)}.ledger-table tr.ledger-table-current-temporal td{border-bottom:0!important}}
