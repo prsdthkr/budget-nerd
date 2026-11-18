@@ -466,7 +466,7 @@ export default function App() {
     if (filters.cashflowMonth) query = query.eq('cashflow_month', filters.cashflowMonth + '-01')
     if (filters.cardId) query = query.eq('card_id', filters.cardId)
     if (filters.category) query = query.eq('type', filters.category)
-    if (!hasFilters) query = query.limit(10)
+    if (!hasFilters) query = query.lte('transaction_date', formatIsoDate(new Date())).limit(10)
     const response = await query
     setActivityLoading(false)
     if (response.error) return setNotice({ type: 'error', text: response.error.message })
