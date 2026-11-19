@@ -555,3 +555,6 @@
 
 .mobile-plan-sort-toggle{display:flex;width:max-content;margin-top:.75rem}.mobile-plan-sort-toggle .btn{min-width:42px}
 @media(max-width:760px){.plan-content-shell .ledger-history-heading .ledger-sort-toggle{display:none}}
+
+.ledger-mobile-amount-summary{display:none}
+@media(max-width:760px){.ledger-table tr{padding:.8rem .75rem}.ledger-table td:nth-child(8),.ledger-table td:nth-child(9),.ledger-table td:nth-child(10){display:none!important}.ledger-table td.ledger-mobile-amount-summary{display:flex!important;grid-column:1/-1;grid-row:3;width:auto!important;align-items:baseline;justify-content:flex-end;gap:.75rem;padding:.2rem 0;white-space:nowrap}.ledger-mobile-amount-summary span{white-space:nowrap}.ledger-table td.ledger-mobile-amount-summary::before{display:none}}
