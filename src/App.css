@@ -571,3 +571,5 @@
 @media(max-width:760px){.ledger-table td.ledger-mobile-amount-summary{display:flex!important}}
 
 @media(max-width:760px){.ledger-table tr:not(.ledger-table-positive):not(.ledger-table-below-minimum) td,.ledger-table td.ledger-mobile-amount-summary,.ledger-table td.ledger-table-actions{background:transparent!important}.ledger-table tr.ledger-table-positive td{background:rgba(25,135,84,.18)!important}.ledger-table tr.ledger-table-below-minimum td{background:var(--bs-danger-bg-subtle)!important}}
+
+@media(max-width:760px){.ledger-table tbody tr:not(.ledger-table-positive):not(.ledger-table-below-minimum):hover td{background:var(--bs-tertiary-bg)!important}.ledger-table tbody tr.ledger-table-positive:hover td{background:color-mix(in srgb,var(--bs-success) 28%,var(--bs-tertiary-bg))!important}.ledger-table tbody tr.ledger-table-below-minimum:hover td{background:var(--bs-danger-bg-subtle)!important}}
